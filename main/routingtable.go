@@ -1,4 +1,4 @@
-package SampleCode
+package main
 
 const bucketSize = 20
 
