@@ -24,8 +24,8 @@ func main() {
 
 	IDRTList := map[KademliaID]RoutingTable{}
 
-	//firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
-	firstNode := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
+	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
+	//firstNode := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 
 	/*nodeIDs := []string{"0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
