@@ -1,7 +1,5 @@
 package main
 
-import "crypto/x509"
-
 type Kademlia struct {
 	closest ContactCandidates
 	asked map[KademliaID]bool
