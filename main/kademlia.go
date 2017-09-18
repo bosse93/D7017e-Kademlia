@@ -1,8 +1,10 @@
 package main
 
+import "crypto/x509"
+
 type Kademlia struct {
 	closest ContactCandidates
-	asked ContactCandidates
+	asked map[KademliaID]bool
 	rt RoutingTable
 }
 
@@ -13,13 +15,28 @@ func NewKademlia(rt *RoutingTable) *Kademlia {
 }
 
 func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*RoutingTable) {
+	c := make(chan []Contact)
 	kademlia.closest = NewContactCandidates()
-	kademlia.asked = NewContactCandidates()
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target.ID, 20))
 	for i := 0; i < 3; i++ {
 		if i < len(kademlia.closest.contacts) {
-			go network[*kademlia.closest.contacts[i].ID].FindClosestContacts(target.ID, 20)
+			kademlia.LookupHelper(target, network, c)
 		}
+	}
+}
+
+func (kademlia *Kademlia) LookupHelper(target Contact, network map[KademliaID]*RoutingTable, c chan []Contact)  {
+	for i := 0; i < 20; i++{
+		if _, ok := kademlia.asked[*kademlia.closest.contacts[i].ID]; !ok {
+			go network[*kademlia.closest.contacts[i].ID].FindClosestContactsChannel(target.ID, 20, c)
+			kademlia.asked[*kademlia.closest.contacts[i].ID] = true
+		}
+	}
+	select {
+	case x := <-c:
+		kademlia.closest.Append(x)
+		kademlia.closest.Sort()
+		kademlia.LookupHelper(target, network, c)
 	}
 }
 
