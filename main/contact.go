@@ -31,6 +31,10 @@ type ContactCandidates struct {
 	contacts []Contact
 }
 
+func NewContactCandidates() ContactCandidates {
+	return ContactCandidates{}
+}
+
 func (candidates *ContactCandidates) Append(contacts []Contact) {
 	candidates.contacts = append(candidates.contacts, contacts...)
 }

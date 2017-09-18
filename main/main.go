@@ -20,13 +20,15 @@ func main() {
 	}
 	*/
 
-	kademlia := NewKademlia()
 
-	IDRTList := map[KademliaID]RoutingTable{}
+
+	IDRTList := map[KademliaID]*RoutingTable{}
 
 	//firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNode := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
+
+	kademlia := NewKademlia(firstNodeRT)
 
 	/*nodeIDs := []string{"0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
 		"F0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -75,16 +77,16 @@ func main() {
 		ID := NewRandomKademliaID()
 		//ID := NewKademliaID(nodeIDs[i])
 		rt := NewRoutingTable(NewContact(ID, a))
-		IDRTList[*ID] = *rt
+		IDRTList[*ID] = rt
 	}
 
 	//each node joins by doing a lookup on the first node and populating its own table
 	for k, v := range IDRTList {
 
 		v.AddContact(firstNode)
-		closestNodes := kademlia.LookupContact(IDRTList[k].me, *firstNodeRT)
-		for i := range closestNodes {
-			v.AddContact(closestNodes[i])
+		kademlia.LookupContact(IDRTList[k].me, IDRTList)
+		for i := 0; i < 20; i++ {
+			v.AddContact(kademlia.closest.contacts[i])
 		}
 	}
 
