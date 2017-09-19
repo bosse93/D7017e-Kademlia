@@ -1,9 +1,11 @@
 package main
 
+/*
 import (
 	"fmt"
 	"strconv"
 )
+*/
 
 type Kademlia struct {
 	closest ContactCandidates
@@ -97,6 +99,7 @@ func (kademlia *Kademlia) LookupHelper(target Contact, network map[KademliaID]*R
 				kademlia.asked[*kademlia.closest.contacts[i].ID] = true
 				break
 			}
+		}
 		//Om i har itererat igenom alla contacter i closest
 		//contacts utan att hittat nån som inte blivit tillfrågad ännu
 		//Vad göra? Invänta alla andra trådar? Avsluta funktionen och därmed rekursionen?
