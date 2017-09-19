@@ -12,7 +12,7 @@ It has these top-level messages:
 */
 package main
 
-import proto "D7017e-Kademlia/protobuf/proto"
+import proto "D7024e-Kademlia/protobuf/proto"
 import fmt "fmt"
 import math "math"
 

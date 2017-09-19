@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 type Kademlia struct {
 	closest ContactCandidates
 	asked map[KademliaID]bool
@@ -23,14 +27,18 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 	//channel for data returned to this func
 	c := make(chan int)
 	//channels that returns data to each thread
+	fmt.Println("LookupContact")
 	kademlia.threadChannels[0] = make(chan []Contact)
 	kademlia.threadChannels[1] = make(chan []Contact)
 	kademlia.threadChannels[2] = make(chan []Contact)
+	
 
 	kademlia.closest = NewContactCandidates()
-	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target.ID, 20))
+	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target.ID, 20)) //3 räcker?
+	fmt.Println(kademlia.closest)
 	//calls alpha lookuphelpers
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
+		fmt.Println("LookupContact1")
 		kademlia.LookupHelper(target, network, c, i, 0)
 	}
 	//after one thread is done with one round, if all threads are done for that round compare with previous round.
@@ -67,11 +75,16 @@ func (kademlia *Kademlia) LookupHelper(target Contact, network map[KademliaID]*R
 	threadChannel := kademlia.threadChannels[thread]
 	//start new thread
 	for i := 0; i < 20; i++{
-		if _, ok := kademlia.asked[*kademlia.closest.contacts[i].ID]; !ok {
-			go network[*kademlia.closest.contacts[i].ID].FindClosestContactsChannel(target.ID, 20, threadChannel)
-			kademlia.asked[*kademlia.closest.contacts[i].ID] = true
-			break
+		if i < len(kademlia.closest.contacts) {
+			if _, ok := kademlia.asked[*kademlia.closest.contacts[i].ID]; !ok {
+				go network[*kademlia.closest.contacts[i].ID].FindClosestContactsChannel(target.ID, 20, threadChannel)
+				kademlia.asked[*kademlia.closest.contacts[i].ID] = true
+				break
+			}
 		}
+		//Om i har itererat igenom alla contacter i closest 
+		//contacts utan att hittat nån som inte blivit tillfrågad ännu
+		//Vad göra? Invänta alla andra trådar? Avsluta funktionen och därmed rekursionen?
 	}
 	//update info, notify channel and do recursive call
 	select {
