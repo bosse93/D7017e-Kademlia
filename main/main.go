@@ -27,6 +27,7 @@ func main() {
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	//firstNode := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
+	IDRTList[*firstNode.ID] = firstNodeRT
 
 	//kademlia := NewKademlia(firstNodeRT)
 
@@ -86,7 +87,7 @@ func main() {
 		v.AddContact(firstNode)
 		r := make(chan []Contact)
 		go kademlia.LookupContact(IDRTList[k].me, IDRTList, r)
-		
+
 		select {
 		case kClosest := <-r:
 			for i := 0; i < 20 && i < len(kClosest); i++ {
@@ -94,8 +95,8 @@ func main() {
 			}
 		}
 
-		
-		
+
+
 	}
 
 	//print the table of the first node

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Kademlia struct {
@@ -35,7 +36,6 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 	var threads = 0
 
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target.ID, 20)) //3 räcker?
-	fmt.Println(kademlia.closest)
 	//calls alpha lookuphelpers
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
 		go kademlia.LookupHelper(target, network, c, i, 0)
@@ -44,30 +44,52 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 	}
 	//after one thread is done with one round, if all threads are done for that round compare with previous round.
 	//if everyone returned the same as the previous round close the channels
-	select {
-	case round := <-c:
-		if round > 0 {
-			_, t0 := kademlia.round[Round{round, 0}]
-			_, t1 := kademlia.round[Round{round, 1}]
-			_, t2 := kademlia.round[Round{round, 2}]
-			var same = true
-			if t0 && t1 && t2 {
-				for i := 0; i < 3 && same; i++ {
-					for j := 0; j < 20 && same; j++ {
-						if kademlia.round[Round{round, i}][j] != kademlia.round[Round{round-1, i}][j] {
-							same = false
+	for {
+		select {
+		case round := <-c:
+			fmt.Println("round" + strconv.Itoa(round))
+			if round > 0 {
+				_, t0 := kademlia.round[Round{round, 0}]
+				_, t1 := kademlia.round[Round{round, 1}]
+				_, t2 := kademlia.round[Round{round, 2}]
+				var same = true
+				if t0 && t1 && t2 {
+					for i := 0; i < 3 && same; i++ {
+						for j := 0; j < 20 && same; j++ {
+							if kademlia.round[Round{round, i}][j] != kademlia.round[Round{round-1, i}][j] {
+								same = false
+							}
 						}
 					}
 				}
-			}
-			if same {
+				if same {
+					count := 20
+					if count > kademlia.closest.Len() {
+						count = kademlia.closest.Len()
+					}
+					r <- kademlia.closest.GetContacts(count)
+					close(c)
+					for i := 0; i < threads; i++ {
+						//maybe send empty contact-array or something to the channels and check for that to stop the recursion,
+						//not sure if closing the channel is enough
+						close(kademlia.threadChannels[i])
+					}
+
+				}
+			} else if round == -1 {
+				fmt.Println("return")
+				r <- kademlia.closest.GetContacts(20)
 				close(c)
 				for i := 0; i < threads; i++ {
 					//maybe send empty contact-array or something to the channels and check for that to stop the recursion,
 					//not sure if closing the channel is enough
+					/*var contact []Contact
+					contact[0] = NewContact(NewKademliaID("quit"), "quit")
+					kademlia.threadChannels[i] <- contact*/
 					close(kademlia.threadChannels[i])
 				}
-				r <- kademlia.closest.GetContacts(20)
+
+
 			}
 		}
 	}
@@ -76,11 +98,20 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 func (kademlia *Kademlia) LookupHelper(target Contact, network map[KademliaID]*RoutingTable, c chan int, thread int, round int)  {
 	threadChannel := kademlia.threadChannels[thread]
 	//start new thread
-	for i := 0; i < 20; i++{
+	for i := range kademlia.closest.contacts {
+		fmt.Println("closest" + kademlia.closest.contacts[i].ID.String() + " round " + strconv.Itoa(round))
+	}
+
+	for i := 0; i < 20 && i < len(kademlia.closest.contacts); i++{
 		if _, ok := kademlia.asked[*kademlia.closest.contacts[i].ID]; !ok {
-			go network[*kademlia.closest.contacts[i].ID].FindClosestContactsChannel(target.ID, 20, threadChannel)
+			table := network[*kademlia.closest.contacts[i].ID]
+			go table.FindClosestContactsChannel(target.ID, 20, threadChannel)
 			kademlia.asked[*kademlia.closest.contacts[i].ID] = true
 			break
+		}
+		if i == len(kademlia.closest.contacts) - 1 {
+			fmt.Println("done")
+			c <- -1
 		}
 		//Om i har itererat igenom alla contacter i closest
 		//contacts utan att hittat nån som inte blivit tillfrågad ännu
@@ -89,11 +120,13 @@ func (kademlia *Kademlia) LookupHelper(target Contact, network map[KademliaID]*R
 	//update info, notify channel and do recursive call
 	select {
 	case x := <-threadChannel:
-		kademlia.closest.Append(x)
-		kademlia.closest.Sort()
-		kademlia.round[Round{round, thread}] = x
-		c <- round
-		kademlia.LookupHelper(target, network, c, thread, round+1)
+		//if (x[0].Address != "quit") {
+			kademlia.closest.Append(x)
+			kademlia.closest.Sort()
+			kademlia.round[Round{round, thread}] = x
+			c <- round
+			kademlia.LookupHelper(target, network, c, thread, round+1)
+		//}
 	}
 }
 

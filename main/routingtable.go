@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 
 const bucketSize = 20
@@ -26,15 +28,16 @@ func (routingTable *RoutingTable) AddContact(contact Contact) {
 	bucket.AddContact(contact)
 }
 
-func (routingTable *RoutingTable) FindClosestContactsChannel(target *KademliaID, count int, c chan []Contact) {
-	c <- routingTable.FindClosestContacts(target, count)
+func (routingTable *RoutingTable) FindClosestContactsChannel(target *KademliaID, count int, threadChannel chan []Contact) {
+	closest := routingTable.FindClosestContacts(target, count)
+	threadChannel <- closest
 }
 
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {
 	var candidates ContactCandidates
 	bucketIndex := routingTable.getBucketIndex(target)
-	bucket := routingTable.buckets[bucketIndex]
 
+	bucket := routingTable.buckets[bucketIndex]
 	candidates.Append(bucket.GetContactAndCalcDistance(target))
 
 	for i := 1; (bucketIndex-i >= 0 || bucketIndex+i < IDLength*8) && candidates.Len() < count; i++ {
@@ -53,7 +56,6 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count 
 	if count > candidates.Len() {
 		count = candidates.Len()
 	}
-
 	return candidates.GetContacts(count)
 }
 
@@ -66,6 +68,5 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 			}
 		}
 	}
-
 	return IDLength*8 - 1
 }
