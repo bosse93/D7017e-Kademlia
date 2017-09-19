@@ -48,13 +48,12 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 	
 	//calls alpha lookuphelpers
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
-<<<<<<< HEAD
+
 		kademlia.LookupHelper(target, network, c, i, 0)
-=======
+
 		go kademlia.LookupHelper(target, network, c, i, 0)
 		kademlia.threadChannels[i] = make(chan []Contact)
 		threads++
->>>>>>> origin/master
 	}
 	//after one thread is done with one round, if all threads are done for that round compare with previous round.
 	//if everyone returned the same as the previous round close the channels
