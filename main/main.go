@@ -84,8 +84,9 @@ func main() {
 	for k, v := range IDRTList {
 
 		v.AddContact(firstNode)
-		kademlia.LookupContact(IDRTList[k].me, IDRTList)
-		
+		newKademlia := NewKademlia(v)
+		newKademlia.LookupContact(IDRTList[k].me, IDRTList)
+		firstNodeRT.AddContact(IDRTList[k].me)
 		
 		for i := 0; i < 20; i++ {
 			if i < len(kademlia.closest.contacts) {

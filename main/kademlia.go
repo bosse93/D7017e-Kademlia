@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Kademlia struct {
@@ -20,6 +21,7 @@ type Round struct {
 func NewKademlia(rt *RoutingTable) *Kademlia {
 	kademlia := &Kademlia{}
 	kademlia.rt = *rt
+	
 	return kademlia
 }
 
@@ -35,10 +37,17 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 
 	kademlia.closest = NewContactCandidates()
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target.ID, 20)) //3 räcker?
-	fmt.Println(kademlia.closest)
+	for i := range kademlia.rt.buckets {
+		contactList := kademlia.rt.buckets[i]
+		fmt.Println("Bucket: " + strconv.Itoa(i))
+		for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
+			contact := elt.Value.(Contact)
+			fmt.Println(contact.String())
+		}
+	}
+	
 	//calls alpha lookuphelpers
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
-		fmt.Println("LookupContact1")
 		kademlia.LookupHelper(target, network, c, i, 0)
 	}
 	//after one thread is done with one round, if all threads are done for that round compare with previous round.
@@ -79,6 +88,7 @@ func (kademlia *Kademlia) LookupHelper(target Contact, network map[KademliaID]*R
 			if _, ok := kademlia.asked[*kademlia.closest.contacts[i].ID]; !ok {
 				go network[*kademlia.closest.contacts[i].ID].FindClosestContactsChannel(target.ID, 20, threadChannel)
 				kademlia.asked[*kademlia.closest.contacts[i].ID] = true
+				fmt.Println("LookupContact1")
 				break
 			}
 		}
