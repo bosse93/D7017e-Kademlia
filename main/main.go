@@ -85,6 +85,8 @@ func main() {
 	for k, v := range IDRTList {
 		kademlia := NewKademlia(v)
 		v.AddContact(firstNode)
+
+		firstNodeRT.AddContact(IDRTList[k].me)
 		r := make(chan []Contact)
 		go kademlia.LookupContact(IDRTList[k].me, IDRTList, r)
 

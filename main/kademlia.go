@@ -30,12 +30,12 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 	//channel for data returned to this func
 	c := make(chan int)
 	//channels that returns data to each thread
-	fmt.Println("LookupContact")
 	kademlia.closest = NewContactCandidates()
 
 	var threads = 0
 
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target.ID, 20)) //3 räcker?
+	fmt.Println(kademlia.closest)
 	//calls alpha lookuphelpers
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
 		go kademlia.LookupHelper(target, network, c, i, 0)
