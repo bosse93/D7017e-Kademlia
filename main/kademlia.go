@@ -31,12 +31,12 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 	//channel for data returned to this func
 	c := make(chan int)
 	//channels that returns data to each thread
-	fmt.Println("LookupContact")
 	kademlia.closest = NewContactCandidates()
 
 	var threads = 0
 
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target.ID, 20)) //3 räcker?
+	/*
 	for i := range kademlia.rt.buckets {
 		contactList := kademlia.rt.buckets[i]
 		fmt.Println("Bucket: " + strconv.Itoa(i))
@@ -45,11 +45,12 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 			fmt.Println(contact.String())
 		}
 	}
+	*/
 	
 	//calls alpha lookuphelpers
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
 
-		kademlia.LookupHelper(target, network, c, i, 0)
+		//kademlia.LookupHelper(target, network, c, i, 0)
 
 		go kademlia.LookupHelper(target, network, c, i, 0)
 		kademlia.threadChannels[i] = make(chan []Contact)
@@ -90,21 +91,12 @@ func (kademlia *Kademlia) LookupHelper(target Contact, network map[KademliaID]*R
 	threadChannel := kademlia.threadChannels[thread]
 	//start new thread
 	for i := 0; i < 20; i++{
-<<<<<<< HEAD
 		if i < len(kademlia.closest.contacts) {
 			if _, ok := kademlia.asked[*kademlia.closest.contacts[i].ID]; !ok {
 				go network[*kademlia.closest.contacts[i].ID].FindClosestContactsChannel(target.ID, 20, threadChannel)
 				kademlia.asked[*kademlia.closest.contacts[i].ID] = true
-				fmt.Println("LookupContact1")
 				break
 			}
-=======
-		if _, ok := kademlia.asked[*kademlia.closest.contacts[i].ID]; !ok {
-			go network[*kademlia.closest.contacts[i].ID].FindClosestContactsChannel(target.ID, 20, threadChannel)
-			kademlia.asked[*kademlia.closest.contacts[i].ID] = true
-			break
->>>>>>> origin/master
-		}
 		//Om i har itererat igenom alla contacter i closest
 		//contacts utan att hittat nån som inte blivit tillfrågad ännu
 		//Vad göra? Invänta alla andra trådar? Avsluta funktionen och därmed rekursionen?
