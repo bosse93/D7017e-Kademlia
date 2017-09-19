@@ -28,7 +28,7 @@ func main() {
 	//firstNode := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 
-	kademlia := NewKademlia(firstNodeRT)
+	//kademlia := NewKademlia(firstNodeRT)
 
 	/*nodeIDs := []string{"0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
 		"F0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -82,16 +82,18 @@ func main() {
 
 	//each node joins by doing a lookup on the first node and populating its own table
 	for k, v := range IDRTList {
-
+		kademlia := NewKademlia(v)
 		v.AddContact(firstNode)
-		kademlia.LookupContact(IDRTList[k].me, IDRTList)
+		r := make(chan []Contact)
+		go kademlia.LookupContact(IDRTList[k].me, IDRTList, r)
 		
-		
-		for i := 0; i < 20; i++ {
-			if i < len(kademlia.closest.contacts) {
-				v.AddContact(kademlia.closest.contacts[i])
+		select {
+		case kClosest := <-r:
+			for i := 0; i < 20 && i < len(kClosest); i++ {
+				v.AddContact(kClosest[i])
 			}
 		}
+
 		
 		
 	}

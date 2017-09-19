@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"strconv"
+)
+
 type Kademlia struct {
 	closest ContactCandidates
 	asked map[KademliaID]bool
@@ -15,24 +20,28 @@ type Round struct {
 
 func NewKademlia(rt *RoutingTable) *Kademlia {
 	kademlia := &Kademlia{}
+	kademlia.asked = make(map[KademliaID]bool)
+	kademlia.round = make(map[Round][]Contact)
 	kademlia.rt = *rt
 	return kademlia
 }
 
-func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*RoutingTable) {
+func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*RoutingTable, r chan []Contact) {
 	//channel for data returned to this func
 	c := make(chan int)
 	//channels that returns data to each thread
-	kademlia.threadChannels[0] = make(chan []Contact)
-	kademlia.threadChannels[1] = make(chan []Contact)
-	kademlia.threadChannels[2] = make(chan []Contact)
 
 	kademlia.closest = NewContactCandidates()
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target.ID, 20))
+	var threads = 0
+
 	//calls alpha lookuphelpers
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
-		kademlia.LookupHelper(target, network, c, i, 0)
+		go kademlia.LookupHelper(target, network, c, i, 0)
+		kademlia.threadChannels[i] = make(chan []Contact)
+		threads++
 	}
+	fmt.Println("threads1 " + strconv.Itoa(threads))
 	//after one thread is done with one round, if all threads are done for that round compare with previous round.
 	//if everyone returned the same as the previous round close the channels
 	select {
@@ -53,11 +62,12 @@ func (kademlia *Kademlia) LookupContact(target Contact, network map[KademliaID]*
 			}
 			if same {
 				close(c)
-				for i := range kademlia.threadChannels {
+				for i := 0; i < threads; i++ {
 					//maybe send empty contact-array or something to the channels and check for that to stop the recursion,
 					//not sure if closing the channel is enough
 					close(kademlia.threadChannels[i])
 				}
+				r <- kademlia.closest.GetContacts(20)
 			}
 		}
 	}
