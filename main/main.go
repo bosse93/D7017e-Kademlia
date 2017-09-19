@@ -71,7 +71,7 @@ func main() {
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0F",
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0"}*/
 	//create 100 nodes
-	for i := 0; i < 40; i++ {
+	for i := 0; i < 10; i++ {
 		port := 8001 + i
 		a := "localhost" + strconv.Itoa(port)
 		ID := NewRandomKademliaID()
@@ -85,12 +85,19 @@ func main() {
 
 		v.AddContact(firstNode)
 		kademlia.LookupContact(IDRTList[k].me, IDRTList)
+		
+		
 		for i := 0; i < 20; i++ {
-			v.AddContact(kademlia.closest.contacts[i])
+			if i < len(kademlia.closest.contacts) {
+				v.AddContact(kademlia.closest.contacts[i])
+			}
 		}
+		
+		
 	}
 
 	//print the table of the first node
+	fmt.Println("Node: " + firstNode.String())
 	for i := range firstNodeRT.buckets {
 		contactList := firstNodeRT.buckets[i]
 		fmt.Println("Bucket: " + strconv.Itoa(i))
@@ -98,7 +105,20 @@ func main() {
 			contact := elt.Value.(Contact)
 			fmt.Println(contact.String())
 		}
-}
+	}
+
+	//print the table of all nodes except first
+	for q, w := range IDRTList {
+		fmt.Println("Node: " + q.String())
+		for z := range w.buckets {
+			contactList := w.buckets[z]
+			fmt.Println("Bucket: " + strconv.Itoa(z))
+			for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
+				contact := elt.Value.(Contact)
+				fmt.Println(contact.String())
+			}
+		}
+	}
 
 /*
 	c := make(chan []Contact)

@@ -28,6 +28,11 @@ func (kademlia *Kademlia) LookupHelper(target Contact, network map[KademliaID]*R
 		if _, ok := kademlia.asked[*kademlia.closest.contacts[i].ID]; !ok {
 			go network[*kademlia.closest.contacts[i].ID].FindClosestContactsChannel(target.ID, 20, c)
 			kademlia.asked[*kademlia.closest.contacts[i].ID] = true
+			/*
+			if true {
+				break
+			}
+			*/
 		}
 	}
 	select {
