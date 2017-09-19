@@ -2,7 +2,7 @@
 // source: data.proto
 // DO NOT EDIT!
 
-package data
+package main
 
 import proto "code.google.com/p/goprotobuf/proto"
 import json "encoding/json"

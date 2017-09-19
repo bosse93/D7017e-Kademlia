@@ -108,6 +108,7 @@ func main() {
 	}
 
 	//print the table of all nodes except first
+	/*
 	for q, w := range IDRTList {
 		fmt.Println("Node: " + q.String())
 		for z := range w.buckets {
@@ -119,6 +120,7 @@ func main() {
 			}
 		}
 	}
+	*/
 
 /*
 	c := make(chan []Contact)
