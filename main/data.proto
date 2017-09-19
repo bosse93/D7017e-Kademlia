@@ -1,9 +1,7 @@
 syntax = "proto3";
-//package main;
+package main;
 
-message Person {
-  //string name = 1; // behöver vi lagra mer än data?
-  //int32 id = 2;  // Unique ID number for this person.
-  bytes data = 3;
+message Data {
+  bytes data = 1;
   }
 
