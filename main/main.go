@@ -72,11 +72,7 @@ func main() {
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0F",
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0"}*/
 	//create 100 nodes
-<<<<<<< HEAD
 	for i := 0; i < 50; i++ {
-=======
-	for i := 0; i < 100; i++ {
->>>>>>> 9907ecd0fd7060d2dac58a1be996a1d643523c6d
 		port := 8001 + i
 		a := "localhost" + strconv.Itoa(port)
 		ID := NewRandomKademliaID()

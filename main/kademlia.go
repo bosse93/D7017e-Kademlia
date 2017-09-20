@@ -2,7 +2,7 @@ package main
 
 import (
 	"time"
-	//"fmt"
+	"fmt"
 	"math/rand"
 )
 
@@ -53,7 +53,6 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 	for {
 		select {
 			case c1 := <-kademlia.threadChannels[0]:
-<<<<<<< HEAD
 				fmt.Println("Channel 1")
 				kademlia.answerHelper(c1)
 
@@ -64,103 +63,8 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 			case c3 := <-kademlia.threadChannels[2]:
 				fmt.Println("Channel 3")
 				kademlia.answerHelper(c3)
-=======
 				//fmt.Println("Channel 1")
-				same := true
-				var newNodeList []Contact
-				for i := range c1 {
-					existsAlready := false
-					for k := range kademlia.closest.contacts {
-						if c1[i].ID == kademlia.closest.contacts[k].ID {
-							existsAlready = true
-						}
-					}
-					if(!existsAlready) {
-						same = false
-						newNodeList = append(newNodeList, c1[i])
-					}
-				}
-				if same {
-					kademlia.numberOfIdenticalAnswersInRow++
-				} else {
-					kademlia.numberOfIdenticalAnswersInRow = 0
-				}
-				kademlia.closest.Append(newNodeList)
-				kademlia.closest.Sort()
-
-				numberOfResults := 20
-				if len(kademlia.closest.contacts) < 20 {
-					numberOfResults = len(kademlia.closest.contacts)
-				}
-				newCandidates := kademlia.closest.GetContacts(numberOfResults)
-				kademlia.closest = NewContactCandidates()
-				kademlia.closest.Append(newCandidates)
-
-			case c2 := <-kademlia.threadChannels[1]:
-				//fmt.Println("Channel 2")
-				same := true
-				var newNodeList []Contact
-				for i := range c2 {
-					existsAlready := false
-					for k := range kademlia.closest.contacts {
-						if c2[i].ID == kademlia.closest.contacts[k].ID {
-							existsAlready = true
-						}
-					}
-					if !existsAlready {
-						same = false
-						newNodeList = append(newNodeList, c2[i])
-					}
-				}
-				if same {
-					kademlia.numberOfIdenticalAnswersInRow++
-				} else {
-					kademlia.numberOfIdenticalAnswersInRow = 0
-				}
-				kademlia.closest.Append(newNodeList)
-				kademlia.closest.Sort()
-
-				numberOfResults := 20
-				if len(kademlia.closest.contacts) < 20 {
-					numberOfResults = len(kademlia.closest.contacts)
-				}
-				newCandidates := kademlia.closest.GetContacts(numberOfResults)
-				kademlia.closest = NewContactCandidates()
-				kademlia.closest.Append(newCandidates)
-
-			case c3 := <-kademlia.threadChannels[2]:
-				//fmt.Println("Channel 3")
-				same := true
-				var newNodeList []Contact
-				for i := range c3 {
-					existsAlready := false
-					for k := range kademlia.closest.contacts {
-						if c3[i].ID == kademlia.closest.contacts[k].ID {
-							existsAlready = true
-						}
-					}
-					if !existsAlready {
-						same = false
-						newNodeList = append(newNodeList, c3[i])
-					}
-				}
-				if same {
-					kademlia.numberOfIdenticalAnswersInRow++
-				} else {
-					kademlia.numberOfIdenticalAnswersInRow = 0
-				}
-				kademlia.closest.Append(newNodeList)
-				kademlia.closest.Sort()
-
-				numberOfResults := 20
-				if len(kademlia.closest.contacts) < 20 {
-					numberOfResults = len(kademlia.closest.contacts)
-				}
-				newCandidates := kademlia.closest.GetContacts(numberOfResults)
-				kademlia.closest = NewContactCandidates()
-				kademlia.closest.Append(newCandidates)
->>>>>>> 9907ecd0fd7060d2dac58a1be996a1d643523c6d
-
+				
 			default:
 				if kademlia.done {
 					break
@@ -202,11 +106,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 				} else {
 					time.Sleep(5 * time.Millisecond)
 					kademlia.noMoreNodesTimeout++
-<<<<<<< HEAD
 					if (kademlia.noMoreNodesTimeout > 10) {
-=======
-					if kademlia.noMoreNodesTimeout > 25 {
->>>>>>> 9907ecd0fd7060d2dac58a1be996a1d643523c6d
 						//fmt.Println("Timeout")
 						close(destinationChannel)
 						kademlia.done = true
