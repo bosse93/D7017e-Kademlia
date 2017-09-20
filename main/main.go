@@ -72,7 +72,7 @@ func main() {
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0F",
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0"}*/
 	//create 100 nodes
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 100; i++ {
 		port := 8001 + i
 		a := "localhost" + strconv.Itoa(port)
 		ID := NewRandomKademliaID()
@@ -80,7 +80,7 @@ func main() {
 		rt := NewRoutingTable(NewContact(ID, a))
 		IDRTList[*ID] = rt
 	}
-
+	lastNode := firstNodeRT
 	//each node joins by doing a lookup on the first node and populating its own table
 	h := 1
 	for k, v := range IDRTList {
@@ -97,6 +97,7 @@ func main() {
 			}
 			//firstNodeRT.AddContact(IDRTList[k].me)
 		}
+		lastNode = v
 		h++	
 	}
 
@@ -115,7 +116,7 @@ func main() {
 
 	//print the table of all nodes
 	
-	for q, w := range IDRTList {
+	/*for q, w := range IDRTList {
 		fmt.Println("Node: " + q.String())
 		for z := range w.buckets {
 			contactList := w.buckets[z]
@@ -125,10 +126,26 @@ func main() {
 				fmt.Println(contact.String())
 			}
 		}
+	}*/
+	
+	fmt.Println("Node: " + firstNode.ID.String())
+	for z := range firstNodeRT.buckets {
+		contactList := firstNodeRT.buckets[z]
+		fmt.Println("Bucket: " + strconv.Itoa(z))
+		for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
+			contact := elt.Value.(Contact)
+			fmt.Println(contact.String())
+		}
 	}
-	
-	
-	
+	fmt.Println("Node: " + lastNode.me.ID.String())
+	for z := range lastNode.buckets {
+		contactList := lastNode.buckets[z]
+		fmt.Println("Bucket: " + strconv.Itoa(z))
+		for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
+			contact := elt.Value.(Contact)
+			fmt.Println(contact.String())
+		}
+	}
 
 /*
 	c := make(chan []Contact)
