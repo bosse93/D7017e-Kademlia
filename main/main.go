@@ -72,7 +72,7 @@ func main() {
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0F",
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0"}*/
 	//create 100 nodes
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		port := 8001 + i
 		a := "localhost" + strconv.Itoa(port)
 		ID := NewRandomKademliaID()
@@ -82,25 +82,25 @@ func main() {
 	}
 
 	//each node joins by doing a lookup on the first node and populating its own table
+	h := 1
 	for k, v := range IDRTList {
-		kademlia := NewKademlia(v)
-		v.AddContact(firstNode)
+		if k != *firstNode.ID {
 
-		firstNodeRT.AddContact(IDRTList[k].me)
-		r := make(chan []Contact)
-		go kademlia.LookupContact(IDRTList[k].me, IDRTList, r)
+			fmt.Println("Ny Nod varv " + strconv.Itoa(h) + ": " + v.me.String())
+			kademlia := NewKademlia(v)
+			v.AddContact(firstNodeRT.me)
 
-		select {
-		case kClosest := <-r:
-			for i := 0; i < 20 && i < len(kClosest); i++ {
-				v.AddContact(kClosest[i])
+			lookupResult := kademlia.LookupContact(IDRTList[k].me.ID, IDRTList)
+			//fmt.Println(lookupResult)
+			for q := range lookupResult {
+				v.AddContact(lookupResult[q])
 			}
+			//firstNodeRT.AddContact(IDRTList[k].me)
 		}
-
-
-
+		h++	
 	}
 
+/*
 	//print the table of the first node
 	fmt.Println("Node: " + firstNode.String())
 	for i := range firstNodeRT.buckets {
@@ -111,9 +111,10 @@ func main() {
 			fmt.Println(contact.String())
 		}
 	}
+	*/
 
-	//print the table of all nodes except first
-	/*
+	//print the table of all nodes
+	
 	for q, w := range IDRTList {
 		fmt.Println("Node: " + q.String())
 		for z := range w.buckets {
@@ -125,7 +126,8 @@ func main() {
 			}
 		}
 	}
-	*/
+	
+	
 
 /*
 	c := make(chan []Contact)
