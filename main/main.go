@@ -6,22 +6,6 @@ import (
 )
 
 func main() {
-	/*
-	contact := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000")
-	rt := NewRoutingTable(contact)
-
-	for i := 1; i < 100; i++ {
-		port := 8000 + i
-		s := []string{}
-		s = append(s, "localhost:")
-		s = append(s, strconv.Itoa(port))
-		a := strings.Join(s, "")
-		rt.AddContact(NewContact(NewKademliaID(NewRandomKademliaID().String()), a))
-	}
-	*/
-
-
-
 	IDRTList := map[KademliaID]*RoutingTable{}
 
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
@@ -95,24 +79,10 @@ func main() {
 			for q := range lookupResult {
 				v.AddContact(lookupResult[q])
 			}
-			//firstNodeRT.AddContact(IDRTList[k].me)
 		}
 		lastNode = v
 		h++	
 	}
-
-/*
-	//print the table of the first node
-	fmt.Println("Node: " + firstNode.String())
-	for i := range firstNodeRT.buckets {
-		contactList := firstNodeRT.buckets[i]
-		fmt.Println("Bucket: " + strconv.Itoa(i))
-		for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
-			contact := elt.Value.(Contact)
-			fmt.Println(contact.String())
-		}
-	}
-	*/
 
 	//print the table of all nodes
 	
@@ -128,6 +98,7 @@ func main() {
 		}
 	}*/
 	
+	//print the table of the first node
 	fmt.Println("Node: " + firstNode.ID.String())
 	for z := range firstNodeRT.buckets {
 		contactList := firstNodeRT.buckets[z]
@@ -137,6 +108,8 @@ func main() {
 			fmt.Println(contact.String())
 		}
 	}
+
+	//print the table of the first node
 	fmt.Println("Node: " + lastNode.me.ID.String())
 	for z := range lastNode.buckets {
 		contactList := lastNode.buckets[z]
@@ -146,16 +119,4 @@ func main() {
 			fmt.Println(contact.String())
 		}
 	}
-
-/*
-	c := make(chan []Contact)
-	kademlia := NewKademlia(rt)
-	go kademlia.LookupContact(contact, c)
-	contacts := <-c
-	//contacts := rt.FindClosestContacts(sample.NewKademliaID("FFFFFFFF00000000000000000000000000000000"), 20)
-	for i := range contacts {
-		fmt.Println(contacts[i].String())
-
-	}
-*/
 }
