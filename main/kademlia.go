@@ -141,7 +141,9 @@ func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, 
 	sleepTime := rand.Intn(20)
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
 	//Should be network call and add to channel what the destination node answers.
+	//Channel buffer is 2. If channel is full will wait until mainThread have recieved at least one answer.
 	sendChannel <-network[*destination.ID].FindClosestContacts(target, 20)
+	//Add asker node to the asked ones RT. Should not be done here but in the other nodes client/RT
 	network[*destination.ID].AddContact(kademlia.rt.me)
 	select {
 		//If channel is closed main thread have decided Lookup is done. Close own channel and end recursion.
