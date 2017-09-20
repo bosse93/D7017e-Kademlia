@@ -72,10 +72,14 @@ func main() {
 
 			fmt.Println("Ny Nod varv " + strconv.Itoa(h) + ": " + v.me.String())
 			kademlia := NewKademlia(v)
+			//Adda kontakt noden till RT
 			v.AddContact(firstNodeRT.me)
 
+			//Kör lookup på eget id 
 			lookupResult := kademlia.LookupContact(IDRTList[k].me.ID, IDRTList)
 			//fmt.Println(lookupResult)
+
+			//Lägg in resultat från lookup
 			for q := range lookupResult {
 				v.AddContact(lookupResult[q])
 			}
