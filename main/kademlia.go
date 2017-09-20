@@ -38,11 +38,14 @@ func NewKademlia(rt *RoutingTable) *Kademlia {
 
 func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[KademliaID]*RoutingTable) []Contact {
 	kademlia.closest = NewContactCandidates()
+	//Find up to alpha contacts closest to target in own RT
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target, 3)) //3 räcker?
 
 
+	//Start buffered channel (Async) for communication mainThread -> askThreads
 	destinationChannel := make(chan Contact, 6)
-	//calls alpha lookuphelpers
+	
+	//Start up to alpha threads on unique buffered channels (Async).
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
 		kademlia.threadChannels[i] = make(chan []Contact, 2)
 		go kademlia.LookupHelper(target, kademlia.closest.contacts[i], network, kademlia.threadChannels[i], destinationChannel)
@@ -50,7 +53,9 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 		kademlia.asked[*kademlia.closest.contacts[i].ID] = true
 	}
 
+	//Loop until Lookup is done.
 	for {
+		//Check if anyone of c1, c2, c3 is ready. If non is ready do default.
 		select {
 			case c1 := <-kademlia.threadChannels[0]:
 				fmt.Println("Channel 1")
@@ -63,7 +68,8 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 			case c3 := <-kademlia.threadChannels[2]:
 				fmt.Println("Channel 3")
 				kademlia.answerHelper(c3)
-				
+			
+			//Check if done cause of timeout or same answers in a row. If so end lookup.	
 			default:
 				if kademlia.done {
 					break
@@ -77,6 +83,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 					}
 					return kademlia.closest.GetContacts(numberOfResults)
 				}
+				//Check for node in closest which have not been asked already
 				nodeFound := false
 				destinationContact := NewContact(NewRandomKademliaID(), "None")
 				for i := range kademlia.closest.contacts {
@@ -86,6 +93,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 						break
 					}
 				}
+				//If node which not been asked already is found. Add it to channel for Main -> askThread communication
 				if nodeFound {
 					kademlia.noMoreNodesTimeout = 0
 					if kademlia.threadCount < 3 {
@@ -103,6 +111,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 						}
 					}
 				} else {
+					//No node found. Timeout if no node found in some time.
 					time.Sleep(5 * time.Millisecond)
 					kademlia.noMoreNodesTimeout++
 					if (kademlia.noMoreNodesTimeout > 10) {
@@ -128,13 +137,17 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 	
 
 func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, network map[KademliaID]*RoutingTable, sendChannel chan []Contact, recieveChannel chan Contact)  {
+	//Sleep random. Simulating a network call to destination.
 	sleepTime := rand.Intn(20)
 	time.Sleep(time.Duration(sleepTime) * time.Millisecond)
+	//Should be network call and add to channel what the destination node answers.
 	sendChannel <-network[*destination.ID].FindClosestContacts(target, 20)
 	network[*destination.ID].AddContact(kademlia.rt.me)
 	select {
+		//If channel is closed main thread have decided Lookup is done. Close own channel and end recursion.
 		case nextDestination, ok := <-recieveChannel:
 			if ok {
+				//Found contact in destination channel. Ask the node!
 				kademlia.LookupHelper(target, nextDestination, network, sendChannel, recieveChannel)
 			} else {
 				close(sendChannel)
@@ -146,6 +159,7 @@ func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, 
 func (kademlia *Kademlia) answerHelper(answer []Contact) {
 	same := true
 	var newNodeList []Contact
+	//Check if elements in answer already exists in closest. If so do not add it again.
 	for i := range answer {
 		existsAlready := false
 		for k := range kademlia.closest.contacts {
@@ -158,11 +172,14 @@ func (kademlia *Kademlia) answerHelper(answer []Contact) {
 			newNodeList = append(newNodeList, answer[i])
 		}
 	}
+	//Same answer as closest. If x identical answers in row lookup will decide its done
 	if(same) {
 		kademlia.numberOfIdenticalAnswersInRow++
 	} else {
 		kademlia.numberOfIdenticalAnswersInRow = 0
 	}
+
+	//Append new nodes to closest. Sort and limit it to the 20 best.
 	kademlia.closest.Append(newNodeList)
 	kademlia.closest.Sort()
 	
