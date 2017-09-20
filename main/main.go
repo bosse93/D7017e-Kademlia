@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"log"
+	"D7024e-Kademlia/protobuf/proto"
 )
 
 func main() {
@@ -123,4 +125,24 @@ func main() {
 			fmt.Println(contact.String())
 		}
 	}
+
+	data := &Data{[]byte("test")}
+	// ...
+
+	// Write the new address book back to disk.
+	out, err := proto.Marshal(data)
+	if err != nil {
+		log.Fatalln("Failed to encode address book:", err)
+	} else {
+		fmt.Println(out)
+	}
+
+	newData := &Data{}
+
+	errUnmarsh := proto.Unmarshal(out, newData)
+	if err != nil {
+		log.Fatal("unmarshaling error: ", errUnmarsh)
+	}
+	// newData now holds {data:"test"}
+	fmt.Println(newData)
 }
