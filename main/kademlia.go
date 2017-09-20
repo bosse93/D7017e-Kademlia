@@ -63,7 +63,6 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 			case c3 := <-kademlia.threadChannels[2]:
 				fmt.Println("Channel 3")
 				kademlia.answerHelper(c3)
-				//fmt.Println("Channel 1")
 				
 			default:
 				if kademlia.done {
@@ -100,7 +99,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 								kademlia.asked[*destinationContact.ID] = true
 								break
 							default:
-								time.Sleep(25 * time.Millisecond)
+								time.Sleep(5 * time.Millisecond)
 						}
 					}
 				} else {
@@ -151,7 +150,7 @@ func (kademlia *Kademlia) answerHelper(answer []Contact) {
 		existsAlready := false
 		for k := range kademlia.closest.contacts {
 			if(answer[i].ID == kademlia.closest.contacts[k].ID) {
-						existsAlready = true
+				existsAlready = true
 			}
 		}
 		if(!existsAlready) {
