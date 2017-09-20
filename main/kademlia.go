@@ -54,20 +54,26 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 		select {
 			case c1 := <-kademlia.threadChannels[0]:
 				fmt.Println("Channel 1")
-				if (len(c1) == len(kademlia.closest.contacts)) {
-					same := true
-					for i := range c1 {
-						if(c1[i] != kademlia.closest.contacts[i]) {
-							same = false
+				same := true
+				var newNodeList []Contact
+				for i := range c1 {
+					existsAlready := false
+					for k := range kademlia.closest.contacts {
+						if(c1[i].ID == kademlia.closest.contacts[k].ID) {
+							existsAlready = true
 						}
 					}
-					if(same) {
-						kademlia.numberOfIdenticalAnswersInRow++
-					} else {
-						kademlia.numberOfIdenticalAnswersInRow = 0
+					if(!existsAlready) {
+						same = false
+						newNodeList = append(newNodeList, c1[i])
 					}
 				}
-				kademlia.closest.Append(c1)
+				if(same) {
+					kademlia.numberOfIdenticalAnswersInRow++
+				} else {
+					kademlia.numberOfIdenticalAnswersInRow = 0
+				}
+				kademlia.closest.Append(newNodeList)
 				kademlia.closest.Sort()
 
 				numberOfResults := 20
@@ -80,20 +86,26 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 
 			case c2 := <-kademlia.threadChannels[1]:
 				fmt.Println("Channel 2")
-				if (len(c2) == len(kademlia.closest.contacts)) {
-					same := true
-					for i := range c2 {
-						if(c2[i] != kademlia.closest.contacts[i]) {
-							same = false
+				same := true
+				var newNodeList []Contact
+				for i := range c2 {
+					existsAlready := false
+					for k := range kademlia.closest.contacts {
+						if(c2[i].ID == kademlia.closest.contacts[k].ID) {
+							existsAlready = true
 						}
 					}
-					if(same) {
-						kademlia.numberOfIdenticalAnswersInRow++
-					} else {
-						kademlia.numberOfIdenticalAnswersInRow = 0
+					if(!existsAlready) {
+						same = false
+						newNodeList = append(newNodeList, c2[i])
 					}
 				}
-				kademlia.closest.Append(c2)
+				if(same) {
+					kademlia.numberOfIdenticalAnswersInRow++
+				} else {
+					kademlia.numberOfIdenticalAnswersInRow = 0
+				}
+				kademlia.closest.Append(newNodeList)
 				kademlia.closest.Sort()
 
 				numberOfResults := 20
@@ -106,20 +118,26 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 
 			case c3 := <-kademlia.threadChannels[2]:
 				fmt.Println("Channel 3")
-				if (len(c3) == len(kademlia.closest.contacts)) {
-					same := true
-					for i := range c3 {
-						if(c3[i] != kademlia.closest.contacts[i]) {
-							same = false
+				same := true
+				var newNodeList []Contact
+				for i := range c3 {
+					existsAlready := false
+					for k := range kademlia.closest.contacts {
+						if(c3[i].ID == kademlia.closest.contacts[k].ID) {
+							existsAlready = true
 						}
 					}
-					if(same) {
-						kademlia.numberOfIdenticalAnswersInRow++
-					} else {
-						kademlia.numberOfIdenticalAnswersInRow = 0
+					if(!existsAlready) {
+						same = false
+						newNodeList = append(newNodeList, c3[i])
 					}
 				}
-				kademlia.closest.Append(c3)
+				if(same) {
+					kademlia.numberOfIdenticalAnswersInRow++
+				} else {
+					kademlia.numberOfIdenticalAnswersInRow = 0
+				}
+				kademlia.closest.Append(newNodeList)
 				kademlia.closest.Sort()
 
 				numberOfResults := 20
@@ -165,13 +183,14 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 								kademlia.asked[*destinationContact.ID] = true
 								break
 							default:
-								time.Sleep(100 * time.Millisecond)
+								time.Sleep(25 * time.Millisecond)
 						}
 					}
 				} else {
 					time.Sleep(10 * time.Millisecond)
 					kademlia.noMoreNodesTimeout++
-					if (kademlia.noMoreNodesTimeout > 10) {
+					if (kademlia.noMoreNodesTimeout > 25) {
+						//fmt.Println("Timeout")
 						close(destinationChannel)
 						kademlia.done = true
 						
