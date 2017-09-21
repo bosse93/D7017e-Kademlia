@@ -8,11 +8,15 @@ It is generated from these files:
 	data.proto
 
 It has these top-level messages:
-	Data
+	RequestPing
+	RequestContact
+	RequestData
+	Reply
+	ReplyContact
 */
 package main
 
-import proto "D7024e-Kademlia/protobuf/proto"
+import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 
@@ -27,33 +31,158 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type Data struct {
-	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+type RequestPing struct {
+	Id string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
 }
 
-func (m *Data) Reset()                    { *m = Data{} }
-func (m *Data) String() string            { return proto.CompactTextString(m) }
-func (*Data) ProtoMessage()               {}
-func (*Data) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *RequestPing) Reset()                    { *m = RequestPing{} }
+func (m *RequestPing) String() string            { return proto.CompactTextString(m) }
+func (*RequestPing) ProtoMessage()               {}
+func (*RequestPing) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *Data) GetData() []byte {
+func (m *RequestPing) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type RequestContact struct {
+	Id string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
+}
+
+func (m *RequestContact) Reset()                    { *m = RequestContact{} }
+func (m *RequestContact) String() string            { return proto.CompactTextString(m) }
+func (*RequestContact) ProtoMessage()               {}
+func (*RequestContact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *RequestContact) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type RequestData struct {
+	Id string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
+}
+
+func (m *RequestData) Reset()                    { *m = RequestData{} }
+func (m *RequestData) String() string            { return proto.CompactTextString(m) }
+func (*RequestData) ProtoMessage()               {}
+func (*RequestData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *RequestData) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type Reply struct {
+	Id   string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
+	Data string `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
+}
+
+func (m *Reply) Reset()                    { *m = Reply{} }
+func (m *Reply) String() string            { return proto.CompactTextString(m) }
+func (*Reply) ProtoMessage()               {}
+func (*Reply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *Reply) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *Reply) GetData() string {
 	if m != nil {
 		return m.Data
+	}
+	return ""
+}
+
+type ReplyContact struct {
+	Id       string                  `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Contacts []*ReplyContact_Contact `protobuf:"bytes,2,rep,name=Contacts" json:"Contacts,omitempty"`
+}
+
+func (m *ReplyContact) Reset()                    { *m = ReplyContact{} }
+func (m *ReplyContact) String() string            { return proto.CompactTextString(m) }
+func (*ReplyContact) ProtoMessage()               {}
+func (*ReplyContact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *ReplyContact) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *ReplyContact) GetContacts() []*ReplyContact_Contact {
+	if m != nil {
+		return m.Contacts
 	}
 	return nil
 }
 
+type ReplyContact_Contact struct {
+	ID       string `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
+	Address  string `protobuf:"bytes,2,opt,name=Address" json:"Address,omitempty"`
+	Distance string `protobuf:"bytes,3,opt,name=Distance" json:"Distance,omitempty"`
+}
+
+func (m *ReplyContact_Contact) Reset()                    { *m = ReplyContact_Contact{} }
+func (m *ReplyContact_Contact) String() string            { return proto.CompactTextString(m) }
+func (*ReplyContact_Contact) ProtoMessage()               {}
+func (*ReplyContact_Contact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 0} }
+
+func (m *ReplyContact_Contact) GetID() string {
+	if m != nil {
+		return m.ID
+	}
+	return ""
+}
+
+func (m *ReplyContact_Contact) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+func (m *ReplyContact_Contact) GetDistance() string {
+	if m != nil {
+		return m.Distance
+	}
+	return ""
+}
+
 func init() {
-	proto.RegisterType((*Data)(nil), "main.Data")
+	proto.RegisterType((*RequestPing)(nil), "main.RequestPing")
+	proto.RegisterType((*RequestContact)(nil), "main.RequestContact")
+	proto.RegisterType((*RequestData)(nil), "main.RequestData")
+	proto.RegisterType((*Reply)(nil), "main.Reply")
+	proto.RegisterType((*ReplyContact)(nil), "main.ReplyContact")
+	proto.RegisterType((*ReplyContact_Contact)(nil), "main.ReplyContact.Contact")
 }
 
 func init() { proto.RegisterFile("data.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 70 bytes of a gzipped FileDescriptorProto
+	// 208 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4a, 0x49, 0x2c, 0x49,
-	0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xc9, 0x4d, 0xcc, 0xcc, 0x53, 0x92, 0xe2, 0x62,
-	0x71, 0x49, 0x2c, 0x49, 0x14, 0x12, 0xe2, 0x62, 0x01, 0xc9, 0x49, 0x30, 0x2a, 0x30, 0x6a, 0xf0,
-	0x04, 0x81, 0xd9, 0x49, 0x6c, 0x60, 0x85, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x6a, 0x83,
-	0xf5, 0xa8, 0x36, 0x00, 0x00, 0x00,
+	0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0xc9, 0x4d, 0xcc, 0xcc, 0x53, 0x92, 0xe5, 0xe2,
+	0x0e, 0x4a, 0x2d, 0x2c, 0x4d, 0x2d, 0x2e, 0x09, 0xc8, 0xcc, 0x4b, 0x17, 0xe2, 0xe3, 0x62, 0xf2,
+	0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0x62, 0xf2, 0x4c, 0x51, 0x52, 0xe0, 0xe2, 0x83,
+	0x4a, 0x3b, 0xe7, 0xe7, 0x95, 0x24, 0x26, 0x97, 0x60, 0xa8, 0x40, 0x18, 0xe0, 0x92, 0x58, 0x92,
+	0x88, 0x21, 0xad, 0xcd, 0xc5, 0x1a, 0x94, 0x5a, 0x90, 0x53, 0x89, 0x2e, 0x21, 0x24, 0xc4, 0xc5,
+	0x02, 0x72, 0x8c, 0x04, 0x13, 0x58, 0x04, 0xcc, 0x56, 0x5a, 0xce, 0xc8, 0xc5, 0x03, 0x56, 0x8d,
+	0x64, 0x59, 0x26, 0x5c, 0x53, 0x66, 0x8a, 0x90, 0x19, 0x17, 0x07, 0x54, 0xaa, 0x58, 0x82, 0x49,
+	0x81, 0x59, 0x83, 0xdb, 0x48, 0x4a, 0x0f, 0xe4, 0x0d, 0x3d, 0x64, 0x5d, 0x7a, 0x50, 0x3a, 0x08,
+	0xae, 0x56, 0xca, 0x9f, 0x8b, 0x1d, 0xd9, 0xfd, 0x2e, 0x70, 0x77, 0xb8, 0x08, 0x49, 0x70, 0xb1,
+	0x3b, 0xa6, 0xa4, 0x14, 0xa5, 0x16, 0x17, 0x43, 0x9d, 0x02, 0xe3, 0x0a, 0x49, 0x71, 0x71, 0xb8,
+	0x64, 0x16, 0x97, 0x24, 0xe6, 0x25, 0xa7, 0x4a, 0x30, 0x83, 0xa5, 0xe0, 0xfc, 0x24, 0x36, 0x70,
+	0x18, 0x1a, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0xca, 0xaa, 0x96, 0xbb, 0x51, 0x01, 0x00, 0x00,
 }

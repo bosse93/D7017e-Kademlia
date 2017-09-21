@@ -1,7 +1,30 @@
 syntax = "proto3";
 package main;
 
-message Data {
-  bytes data = 1;
+message RequestPing {
+  string Id = 1;
   }
 
+message RequestContact {
+  string Id = 1;
+}
+
+message RequestData {
+  string Id = 1;
+}
+
+message Reply {
+  string Id = 1;
+  string data = 2;
+}
+
+message ReplyContact {
+  string id = 1;
+  message Contact {
+    string ID = 1;
+    string Address = 2;
+    string Distance = 3;
+  }
+
+  repeated Contact Contacts = 2;
+}
