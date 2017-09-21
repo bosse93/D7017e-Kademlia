@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"log"
-	"D7024e-Kademlia/protobuf/proto"
+	//"log"
+	//"D7024e-Kademlia/protobuf/proto"
 )
 
 func main() {
@@ -60,7 +60,7 @@ func main() {
 	//create 100 nodes
 	for i := 0; i < 50; i++ {
 		port := 8001 + i
-		a := "localhost" + strconv.Itoa(port)
+		a := "localhost:" + strconv.Itoa(port)
 		ID := NewRandomKademliaID()
 		//ID := NewKademliaID(nodeIDs[i])
 		rt := NewRoutingTable(NewContact(ID, a))
@@ -126,7 +126,7 @@ func main() {
 		}
 	}
 
-	data := &Data{[]byte("test")}
+	/*data := &Data{[]byte("test")}
 	// ...
 
 	// Write the new address book back to disk.
@@ -144,5 +144,9 @@ func main() {
 		log.Fatal("unmarshaling error: ", errUnmarsh)
 	}
 	// newData now holds {data:"test"}
-	fmt.Println(newData)
+	fmt.Println(newData)*/
+	go Listen("localhost", 8000)
+	netw := NewNetwork(lastNode)
+	netw.SendPingMessage(&firstNode)
+
 }
