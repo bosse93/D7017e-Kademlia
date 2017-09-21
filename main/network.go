@@ -5,8 +5,9 @@ type Network struct {
 }
 
 func NewNetwork(rt *RoutingTable) *Network {
-	Network.rt = *rt
-	return Network
+	network := &Network{}
+	network.rt = *rt
+	return network
 }
 
 func Listen(ip string, port int) {
@@ -39,14 +40,14 @@ func (network *Network) handleRequest() {
 	//Unpack packet
 	//packet := ....
 
-	Network.rt.AddContact(packet.sender)
+	network.rt.AddContact(packet.sender)
 
 	switch packet.messageType {
 		case "SendPingMessage":
 			//Måste svara nåt! Svara med sig själv?
 
 		case "SendFindContactMessage":
-			answerData := Network.rt.FindClosestContacts(packet.target, 20)
+			answerData := network.rt.FindClosestContacts(packet.target, 20)
 
 			//Pack answer. answerData, packet.messageID, ....
 
@@ -57,7 +58,7 @@ func (network *Network) handleRequest() {
 			//send file How?
 
 			//Else
-			answerData := Network.rt.FindClosestContacts(packet.target, 20)
+			answerData := network.rt.FindClosestContacts(packet.target, 20)
 
 		case "SendStoreMessage":
 			//Store data
