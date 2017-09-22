@@ -36,6 +36,6 @@ message WrapperMessage {
         RequestContact m2 = 3;
         RequestData m3 = 4;
         Reply m4 = 5;
-        ReplyContact = 6;
+        ReplyContact m5 = 6;
     }
 }
