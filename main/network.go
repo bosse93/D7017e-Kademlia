@@ -33,23 +33,20 @@ func Listen(ip string, port int) {
 	fmt.Println("Listening on port " + strconv.Itoa(port))
 	for {
 		n, addr, err := serverConn.ReadFromUDP(buf)
-		packetRequest := &RequestPing{}
+		//packetRequest := &RequestPing{}
 		wrapperReply := &WrapperMessage{}
 
-
 		replyErr := proto.Unmarshal(buf[0:n], wrapperReply)
-		requestErr := proto.Unmarshal(buf[0:n], packetRequest)
+		//requestErr := proto.Unmarshal(buf[0:n], packetRequest)
 
 		if wrapperReply.Id == "ping" {
-			fmt.Println("Recieved reply packet with "+ wrapperReply.Id)
-			//test := proto.Unmarshal(buf[0:n], wrapperReply.Msg)
-
+			fmt.Println("Recieved reply packet with " + wrapperReply.Id + " and " + wrapperReply.GetM1().Id + " from " + addr.String())
 
 		}
 
-		if requestErr == nil {
+		/*if requestErr == nil {
 			fmt.Println("Received request packet with " + packetRequest.Id + " from " + addr.String())
-		}
+		}*/
 		if replyErr == nil {
 			//fmt.Println("Recieved reply packet with " + packetReply.Id + " and " + packetReply.Data + " from " + addr.String())
 		}
