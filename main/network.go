@@ -34,16 +34,24 @@ func Listen(ip string, port int) {
 	for {
 		n, addr, err := serverConn.ReadFromUDP(buf)
 		packetRequest := &RequestPing{}
-		packetReply := &Reply{}
+		wrapperReply := &WrapperMessage{}
 
+
+		replyErr := proto.Unmarshal(buf[0:n], wrapperReply)
 		requestErr := proto.Unmarshal(buf[0:n], packetRequest)
-		replyErr := proto.Unmarshal(buf[0:n], packetReply)
+
+		if wrapperReply.Id == "ping" {
+			fmt.Println("Recieved reply packet with "+ wrapperReply.Id)
+			//test := proto.Unmarshal(buf[0:n], wrapperReply.Msg)
+
+
+		}
 
 		if requestErr == nil {
 			fmt.Println("Received request packet with " + packetRequest.Id + " from " + addr.String())
 		}
 		if replyErr == nil {
-			fmt.Println("Recieved reply packet with " + packetReply.Id + " and " + packetReply.Data + " from " + addr.String())
+			//fmt.Println("Recieved reply packet with " + packetReply.Id + " and " + packetReply.Data + " from " + addr.String())
 		}
 
 
@@ -68,9 +76,12 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	defer conn.Close()
 	i := 1
 	for {
-		//packet := &RequestPing{strconv.Itoa(i)}
-		packet := &Reply{strconv.Itoa(i), "reply data"}
-		data, err := proto.Marshal(packet)
+		packet := &RequestPing{strconv.Itoa(i)}
+		wrapperMsg := &WrapperMessage_M1{packet}
+		wrapper := &WrapperMessage{"ping", wrapperMsg}
+
+		//packet := &Reply{strconv.Itoa(i), "reply data"}
+		data, err := proto.Marshal(wrapper)
 		if err != nil {
 			log.Fatal("marshalling error: ", err)
 		}
