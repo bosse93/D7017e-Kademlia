@@ -148,5 +148,7 @@ func main() {
 	go Listen("localhost", 8000)
 	netw := NewNetwork(lastNode)
 	netw.SendPingMessage(&firstNode)
+	//netw.SendFindContactMessage(&firstNode)
+	//netw.SendFindDataMessage(&firstNode)
 
 }
