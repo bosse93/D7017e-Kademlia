@@ -7,6 +7,7 @@ message RequestPing {
 
 message RequestContact {
   string Id = 1;
+  string target = 2;
 }
 
 message RequestData {
@@ -23,7 +24,7 @@ message ReplyContact {
   message Contact {
     string ID = 1;
     string Address = 2;
-    string Distance = 3;
+    int Distance = 3;
   }
 
   repeated Contact Contacts = 2;
