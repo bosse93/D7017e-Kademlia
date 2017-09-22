@@ -28,3 +28,14 @@ message ReplyContact {
 
   repeated Contact Contacts = 2;
 }
+
+message WrapperMessage {
+    string id = 1;
+    oneof msg {
+        RequestPing m1 = 2;
+        RequestContact m2 = 3;
+        RequestData m3 = 4;
+        Reply m4 = 5;
+        ReplyContact = 6;
+    }
+}

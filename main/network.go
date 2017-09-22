@@ -33,9 +33,19 @@ func Listen(ip string, port int) {
 	fmt.Println("Listening on port " + strconv.Itoa(port))
 	for {
 		n, addr, err := serverConn.ReadFromUDP(buf)
-		packet := &RequestPing{}
-		err = proto.Unmarshal(buf[0:n], packet)
-		fmt.Println("Received packet with " + packet.Id + " from" + addr.String())
+		packetRequest := &RequestPing{}
+		packetReply := &Reply{}
+
+		requestErr := proto.Unmarshal(buf[0:n], packetRequest)
+		replyErr := proto.Unmarshal(buf[0:n], packetReply)
+
+		if requestErr == nil {
+			fmt.Println("Received request packet with " + packetRequest.Id + " from " + addr.String())
+		}
+		if replyErr == nil {
+			fmt.Println("Recieved reply packet with " + packetReply.Id + " and " + packetReply.Data + " from " + addr.String())
+		}
+
 
 		if err != nil {
 			log.Fatal("Error: ", err)
@@ -58,7 +68,8 @@ func (network *Network) SendPingMessage(contact *Contact) {
 	defer conn.Close()
 	i := 1
 	for {
-		packet := &RequestPing{strconv.Itoa(i)}
+		//packet := &RequestPing{strconv.Itoa(i)}
+		packet := &Reply{strconv.Itoa(i), "reply data"}
 		data, err := proto.Marshal(packet)
 		if err != nil {
 			log.Fatal("marshalling error: ", err)
