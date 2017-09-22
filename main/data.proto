@@ -24,7 +24,7 @@ message ReplyContact {
   message Contact {
     string ID = 1;
     string Address = 2;
-    int Distance = 3;
+    string Distance = 3;
   }
 
   repeated Contact Contacts = 2;
