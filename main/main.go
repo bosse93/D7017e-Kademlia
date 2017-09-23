@@ -66,6 +66,14 @@ func printLastNodeRT(nodeList []*RoutingTable) {
 			contact := elt.Value.(Contact)
 			fmt.Println(contact.String())
 		}
+	}*/
+
+	kademlia := NewKademlia(lastNode)
+	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store", IDRTList)
+	for k1, v := range IDRTList {
+		for k2, v2 := range v.node.data {
+			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
+		}
 	}
 }
 
