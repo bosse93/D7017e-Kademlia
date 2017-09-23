@@ -46,11 +46,15 @@ func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
 	return true
 }
 
-func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
+func (kademliaID *KademliaID) CalcDistance(target *KademliaID) *KademliaID {
+	
 	result := KademliaID{}
+	
 	for i := 0; i < IDLength; i++ {
+		
 		result[i] = kademliaID[i] ^ target[i]
 	}
+	
 	return &result
 }
 

@@ -7,53 +7,108 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	//"math/rand"
+	"sync"
 )
 
 type Network struct {
 	rt RoutingTable
+	waitingAnswerList map[KademliaID](chan *WrapperMessage)
+	listenConnection *net.UDPConn
+	threadChannels [](chan string)
+	mux sync.Mutex
+}
+
+type StringContact struct {
+	ID string
+	Address string
+	distance string
+}
+
+
+func NewStringContact(id string, address string, distance string) StringContact{
+	return StringContact{id, address, distance}
 }
 
 func NewNetwork(rt *RoutingTable) *Network {
 	network := &Network{}
 	network.rt = *rt
+	network.waitingAnswerList = make(map[KademliaID]chan *WrapperMessage)
 	return network
 }
 
 //Listening for new packets on ip, port combination
-func Listen(ip string, port int) {
+func (network *Network) Listen(ip string, port int) {
 	// ESTABLISH UDP CONNECTION
-	serverAddr, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(port))
-	fmt.Println("server address " + serverAddr.String())
+	serverAddr, err := net.ResolveUDPAddr("udp", ip + ":" + strconv.Itoa(port))
 	CheckError(err)
 
 	serverConn, err := net.ListenUDP("udp", serverAddr)
 	CheckError(err)
+	network.listenConnection = serverConn
+
 	defer serverConn.Close()
 
-	buf := make([]byte, 1024)
+	buf := make([]byte, 4096)
 	fmt.Println("Listening on port " + strconv.Itoa(port))
 
 	//For each new packet do marshalling
 	for {
-		n, addr, err := serverConn.ReadFromUDP(buf)
+		n, addr, _ := serverConn.ReadFromUDP(buf)
 		wrapperRequest := &WrapperMessage{}
 		replyErr := proto.Unmarshal(buf[0:n], wrapperRequest)
 
+		go network.handleRequest(wrapperRequest, replyErr, addr)
+		/*
+
 		if wrapperRequest.Id == "ping" && replyErr == nil {
-			/** We a ping **/
+			
+		
+			
 			fmt.Println("Recieved request packet with " + wrapperRequest.Id + ", id:" + wrapperRequest.GetM1().Id + " from " + addr.String())
-			//Pinga tillbaka
+		
+
+			packet := &Reply{wrapperRequest.GetM1().Id, serverAddr.String()}
+			wrapperMsg := &WrapperMessage_M4{packet}
+			wrapper := &WrapperMessage{"reply", wrapperMsg}
+
+			data, err := proto.Marshal(wrapper)
+			if err != nil {
+				log.Fatal("marshalling error: ", err)
+			}
+
+			buf := []byte(data)
+			_, err = serverConn.WriteToUDP(buf, addr)
+			if err != nil {
+				log.Println(err)
+			}
+
+			
+			//conn.Close()
+			
 
 		} else if wrapperRequest.Id == "contact" && replyErr == nil {
-			/** We got a contact **/
+			
 			fmt.Println("Recieved request packet with " + wrapperRequest.Id + ", id:" + wrapperRequest.GetM2().Id + " from " + addr.String())
 
 		} else if wrapperRequest.Id == "data" && replyErr == nil {
-			/** We got some data **/
+			
 			fmt.Println("Recieved request packet with " + wrapperRequest.Id + ", id:" + wrapperRequest.GetM3().Id + " from " + addr.String())
 
 		} else if wrapperRequest.Id == "store" && replyErr == nil {
-			/** Store **/
+			
+
+		} else if wrapperRequest.Id == "reply" && replyErr == nil {
+			
+			requestID, err := strconv.Atoi(wrapperRequest.GetM4().GetId())
+
+			if err != nil {
+				fmt.Println("Error")
+			}
+			answerChannel := network.waitingAnswerList[requestID]
+
+			answerChannel <- wrapperRequest.GetM4().GetData()
+			//close(answerChannel)
 
 		} else {
 			log.Println("Something went wrong in Listen, err: ", replyErr)
@@ -62,75 +117,94 @@ func Listen(ip string, port int) {
 
 		if err != nil {
 			log.Fatal("Error: ", err)
-		}
+		}*/
 	}
+
 
 }
 
 
-func (network *Network) SendPingMessage(contact *Contact) {
+func (network *Network) SendPingMessage(contact *Contact) Contact{
+	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)
-	fmt.Println("remote address " + remoteAddr.String())
 	CheckError(err)
 
-	localAddr, err := net.ResolveUDPAddr("udp", network.rt.me.Address)
-	CheckError(err)
+	packet := &RequestPing{messageID.String()}
+	wrapperMsg := &WrapperMessage_M1{packet}
+	wrapper := &WrapperMessage{"ping", wrapperMsg}
+	
+	answerChannel := make(chan *WrapperMessage)
+	network.AddToChannelMap(*messageID, answerChannel)
 
-	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
-	CheckError(err)
+	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
+	wrapper = network.waitForAnswer(answerChannel)	
 
-	defer conn.Close()
-	i := 1
-	for {
-		packet := &RequestPing{strconv.Itoa(i)}
-		wrapperMsg := &WrapperMessage_M1{packet}
-		wrapper := &WrapperMessage{"ping", wrapperMsg}
-
-		data, err := proto.Marshal(wrapper)
-		if err != nil {
-			log.Fatal("marshalling error: ", err)
-		}
-		buf := []byte(data)
-		_, err = conn.Write(buf)
-		if err != nil {
-			log.Println(err)
-		}
-		i++
-		time.Sleep(time.Second * 1)
+	if(wrapper != nil) {
+		returnContact := NewContact(NewKademliaID(wrapper.GetM5().Contacts[0].ID), wrapper.GetM5().Contacts[0].Address)
+		return returnContact
+	} else {
+		fmt.Println("Timeout")
+		return NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "0.0.0.0:0000")
 	}
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) {
+func (network *Network) waitForAnswer(answerChannel chan *WrapperMessage) *WrapperMessage{
+	timeout := make(chan bool, 1)
+	go TimeoutWaiter(5, timeout)
+	for{
+		select{
+			case answer := <-answerChannel:
+				return answer
+			case <- timeout:
+				return nil
+		}
+	}
+}
+
+func (network *Network) AddToChannelMap(messageID KademliaID, answerChannel chan *WrapperMessage) {
+	network.mux.Lock()
+	network.waitingAnswerList[messageID] = answerChannel
+
+	network.mux.Unlock()
+}
+
+func TimeoutWaiter(sleepTime int, sendChannel chan bool) {
+	time.Sleep(time.Duration(sleepTime) * time.Second)
+	sendChannel <-true
+	close(sendChannel)
+}
+
+
+
+func (network *Network) SendFindContactMessage(contact *Contact, targetID *KademliaID) []Contact{
 	// ESTABLISH UDP CONNECTION
+	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)
-	fmt.Println("remote address " + remoteAddr.String())
 	CheckError(err)
 
-	localAddr, err := net.ResolveUDPAddr("udp", network.rt.me.Address)
-	CheckError(err)
+	packet := &RequestContact{messageID.String(), targetID.String()}  //EDIT ME
+	wrapperMsg := &WrapperMessage_M2{packet}
+	wrapper := &WrapperMessage{"RequestContact", wrapperMsg}
 
-	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
-	CheckError(err)
+	answerChannel := make(chan *WrapperMessage, 1)
+	network.AddToChannelMap(*messageID, answerChannel)
 
-	defer conn.Close()
-	i := 1
-	for {
-		packet := &RequestContact{strconv.Itoa(i)}  //EDIT ME
-		wrapperMsg := &WrapperMessage_M2{packet}
-		wrapper := &WrapperMessage{"contact", wrapperMsg}
+	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
 
-		data, err := proto.Marshal(wrapper)
-		if err != nil {
-			log.Fatal("marshalling error: ", err)
+	wrapper = network.waitForAnswer(answerChannel)
+
+	contactList := []Contact{}
+	if(wrapper != nil) {
+		for i := range wrapper.GetM5().GetContacts() {
+			contactList = append(contactList, NewContact(NewKademliaID(wrapper.GetM5().Contacts[i].GetID()), wrapper.GetM5().Contacts[i].GetAddress()))
 		}
-		buf := []byte(data)
-		_, err = conn.Write(buf)
-		if err != nil {
-			log.Println(err)
-		}
-		i++
-		time.Sleep(time.Second * 1)
+		return contactList
+	} else {
+		fmt.Println("Timeout")
+		contactList = append(contactList, NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "0.0.0.0:0000"))
+		return contactList
 	}
+
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
@@ -145,47 +219,75 @@ func (network *Network) SendStoreMessage(data []byte) {
 
 
 
-
-func (network *Network) handleRequest() {
-	//Unpack packet
-	//packet := ....
-
-	/*network.rt.AddContact(packet.sender)
-
-	switch packet.messageType {
-		case "SendPingMessage":
-			//Måste svara nåt! Svara med sig själv?
-
-		case "SendFindContactMessage":
-			answerData := network.rt.FindClosestContacts(packet.target, 20)
-
-			//Pack answer. answerData, packet.messageID, ....
-
-		case "SendFindDataMessage":
-			//Check if data in storage, packet.target(ID to data)
-
-			//If Data 
-			//send file How?
-
-			//Else
-			answerData := network.rt.FindClosestContacts(packet.target, 20)
-
-		case "SendStoreMessage":
-			//Store data
-			//Kolla om data redan finns?
-
-			//Svara med något?
-
-
-		default:
-			//Not a valid message
-
-
+func (network *Network) marshalHelper(wrapper *WrapperMessage) []byte{
+	data, err := proto.Marshal(wrapper)
+	if err != nil {
+		log.Fatal("Marshall Error: ", err)
 	}
+	return data
+}
 
-	//Send marshalled response on UDP*/
+func (network *Network) sendPacket(data []byte, targetAddress *net.UDPAddr) {
+	buf := []byte(data)
+	_, err := network.listenConnection.WriteToUDP(buf, targetAddress)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (network *Network) handleRequest(message *WrapperMessage, replyErr error, sourceAddress *net.UDPAddr) {
+	if message.Id == "RequestPing" && replyErr == nil {	
+
+		contakter := &ReplyContact_Contact{network.rt.me.ID.String(), network.rt.me.Address, network.rt.me.distance.String()}
+		kontakter := []*ReplyContact_Contact{contakter}
+		packet := &ReplyContact{message.GetM1().Id, kontakter}
+
+		wrapperMsg := &WrapperMessage_M5{packet}
+		wrapper := &WrapperMessage{"ReplyContact", wrapperMsg}
+
+		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
+		
+		
+	} else if message.Id == "RequestContact" && replyErr == nil {
+		closestContacts := network.rt.FindClosestContacts(NewKademliaID(message.GetM2().Target), 20)
+		
+		kontakter := []*ReplyContact_Contact{}
+		for i := range closestContacts {
+			contakter := &ReplyContact_Contact{closestContacts[i].ID.String(), closestContacts[i].Address, closestContacts[i].String()}
+			kontakter = append(kontakter, contakter)
+		}
 
 
+		packet := &ReplyContact{message.GetM2().GetId(), kontakter}
+		wrapperMsg := &WrapperMessage_M5{packet}
+		wrapper := &WrapperMessage{"ReplyContact", wrapperMsg}
+
+		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
+
+	} else if message.Id == "data" && replyErr == nil {
+		
+
+	} else if message.Id == "store" && replyErr == nil {
+		
+
+	} else if message.Id == "Replay" && replyErr == nil {
+
+	} else if message.Id == "ReplyContact" && replyErr == nil {
+		requestID := NewKademliaID(message.GetM5().GetId())
+
+		answerChannel := network.waitingAnswerList[*requestID]
+		if(answerChannel != nil) {
+			answerChannel <- message
+		} else {
+			fmt.Println("Forged Reply")
+		}
+		
+		close(answerChannel)
+
+	} else {
+		fmt.Println(message.Id)
+		log.Println("Something went wrong in Listen, err: ", replyErr)
+	}
 
 }
 

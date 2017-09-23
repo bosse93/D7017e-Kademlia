@@ -5,15 +5,18 @@ import (
 	"strconv"
 	//"log"
 	//"D7024e-Kademlia/protobuf/proto"
+	"time"
 )
 
 func main() {
-	IDRTList := map[KademliaID]*RoutingTable{}
+	IDRTList := map[KademliaID]*Network{}
 
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	//firstNode := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
-	IDRTList[*firstNode.ID] = firstNodeRT
+	nw := NewNetwork(firstNodeRT)
+	go nw.Listen("localhost", 8000)
+	IDRTList[*firstNode.ID] = nw
 
 	//kademlia := NewKademlia(firstNodeRT)
 
@@ -58,35 +61,40 @@ func main() {
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0F",
 		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0"}*/
 	//create 100 nodes
-	for i := 0; i < 50; i++ {
+	for i := 0; i < 100; i++ {
 		port := 8001 + i
 		a := "localhost:" + strconv.Itoa(port)
 		ID := NewRandomKademliaID()
 		//ID := NewKademliaID(nodeIDs[i])
+
 		rt := NewRoutingTable(NewContact(ID, a))
-		IDRTList[*ID] = rt
+		nw := NewNetwork(rt)
+		go nw.Listen("localhost", port)
+		IDRTList[*ID] = nw
 	}
+	time.Sleep(5000 * time.Millisecond)
 	lastNode := firstNodeRT
 	//each node joins by doing a lookup on the first node and populating its own table
 	h := 1
 	for k, v := range IDRTList {
 		if k != *firstNode.ID {
 
-			fmt.Println("Ny Nod varv " + strconv.Itoa(h) + ": " + v.me.String())
+			fmt.Println("Ny Nod varv " + strconv.Itoa(h) + ": " + v.rt.me.String())
 			kademlia := NewKademlia(v)
 			//Add first contact node to own RT
-			v.AddContact(firstNodeRT.me)
+			v.rt.AddContact(firstNodeRT.me)
 
 			//Do lookup on own id
-			lookupResult := kademlia.LookupContact(IDRTList[k].me.ID, IDRTList)
-			//fmt.Println(lookupResult)
+			lookupResult := kademlia.LookupContact(IDRTList[k].rt.me.ID, IDRTList)
 
 			//Add results from lookup to own RT
 			for q := range lookupResult {
-				v.AddContact(lookupResult[q])
+				//fmt.Println(lookupResult[q].String())
+				v.rt.AddContact(lookupResult[q])
 			}
 		}
-		lastNode = v
+		time.Sleep(500 * time.Millisecond)
+		lastNode = &v.rt
 		h++	
 	}
 
@@ -103,6 +111,7 @@ func main() {
 			}
 		}
 	}*/
+	
 	
 	//print the table of the first node
 	fmt.Println("Node: " + firstNode.ID.String())
@@ -125,6 +134,7 @@ func main() {
 			fmt.Println(contact.String())
 		}
 	}
+	
 
 	/*data := &Data{[]byte("test")}
 	// ...
@@ -145,9 +155,11 @@ func main() {
 	}
 	// newData now holds {data:"test"}
 	fmt.Println(newData)*/
+	/*
 	go Listen("localhost", 8000)
 	netw := NewNetwork(lastNode)
 	netw.SendPingMessage(&firstNode)
+	*/
 	//netw.SendFindContactMessage(&firstNode)
 	//netw.SendFindDataMessage(&firstNode)
 
