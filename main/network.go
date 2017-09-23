@@ -12,7 +12,8 @@ import (
 )
 
 type Network struct {
-	rt RoutingTable
+	//rt RoutingTable
+	node *Node
 	waitingAnswerList map[KademliaID](chan *WrapperMessage)
 	listenConnection *net.UDPConn
 	threadChannels [](chan string)
@@ -30,9 +31,9 @@ func NewStringContact(id string, address string, distance string) StringContact{
 	return StringContact{id, address, distance}
 }
 
-func NewNetwork(rt *RoutingTable) *Network {
+func NewNetwork(node *Node) *Network {
 	network := &Network{}
-	network.rt = *rt
+	network.node = node
 	network.waitingAnswerList = make(map[KademliaID]chan *WrapperMessage)
 	network.mux = &sync.Mutex{}
 	return network
@@ -132,7 +133,7 @@ func (network *Network) SendPingMessage(contact *Contact) Contact{
 
 	packet := &RequestPing{messageID.String()}
 	wrapperMsg := &WrapperMessage_M1{packet}
-	wrapper := &WrapperMessage{"ping", wrapperMsg}
+	wrapper := &WrapperMessage{"ping", network.node.rt.me.ID.String(), wrapperMsg}
 	
 	answerChannel := make(chan *WrapperMessage)
 	network.AddToChannelMap(*messageID, answerChannel)
@@ -185,7 +186,7 @@ func (network *Network) SendFindContactMessage(contact *Contact, targetID *Kadem
 
 	packet := &RequestContact{messageID.String(), targetID.String()}  //EDIT ME
 	wrapperMsg := &WrapperMessage_M2{packet}
-	wrapper := &WrapperMessage{"RequestContact", wrapperMsg}
+	wrapper := &WrapperMessage{"RequestContact", network.node.rt.me.ID.String(), wrapperMsg}
 
 	answerChannel := make(chan *WrapperMessage, 1)
 	network.AddToChannelMap(*messageID, answerChannel)
@@ -212,8 +213,23 @@ func (network *Network) SendFindDataMessage(hash string) {
 
 }
 
-func (network *Network) SendStoreMessage(data []byte) {
-	// TODO
+func (network *Network) SendStoreMessage(hash string, data string, address string) {
+	fmt.Println("Sending store message")
+	messageID := NewRandomKademliaID()
+	remoteAddr, err := net.ResolveUDPAddr("udp", address)
+	CheckError(err)
+	sendData := []*ReplyContact_Contact{}
+	sendData = append(sendData, &ReplyContact_Contact{hash, data, ""})
+	packet := &ReplyContact{messageID.String(), sendData}  //EDIT ME
+	wrapperMsg := &WrapperMessage_M5{packet}
+	wrapper := &WrapperMessage{"store", network.node.rt.me.ID.String(), wrapperMsg}
+
+	answerChannel := make(chan *WrapperMessage, 1)
+	network.AddToChannelMap(*messageID, answerChannel)
+
+	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
+
+	wrapper = network.waitForAnswer(answerChannel)
 }
 
 
@@ -239,18 +255,18 @@ func (network *Network) sendPacket(data []byte, targetAddress *net.UDPAddr) {
 func (network *Network) handleRequest(message *WrapperMessage, replyErr error, sourceAddress *net.UDPAddr) {
 	if message.Id == "RequestPing" && replyErr == nil {	
 
-		contakter := &ReplyContact_Contact{network.rt.me.ID.String(), network.rt.me.Address, network.rt.me.distance.String()}
+		contakter := &ReplyContact_Contact{network.node.rt.me.ID.String(), network.node.rt.me.Address, network.node.rt.me.distance.String()}
 		kontakter := []*ReplyContact_Contact{contakter}
 		packet := &ReplyContact{message.GetM1().Id, kontakter}
 
 		wrapperMsg := &WrapperMessage_M5{packet}
-		wrapper := &WrapperMessage{"ReplyContact", wrapperMsg}
+		wrapper := &WrapperMessage{"ReplyContact", network.node.rt.me.ID.String(), wrapperMsg}
 
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 		
 		
 	} else if message.Id == "RequestContact" && replyErr == nil {
-		closestContacts := network.rt.FindClosestContacts(NewKademliaID(message.GetM2().Target), 20)
+		closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetM2().Target), 20)
 		
 		kontakter := []*ReplyContact_Contact{}
 		for i := range closestContacts {
@@ -261,7 +277,7 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 
 		packet := &ReplyContact{message.GetM2().GetId(), kontakter}
 		wrapperMsg := &WrapperMessage_M5{packet}
-		wrapper := &WrapperMessage{"ReplyContact", wrapperMsg}
+		wrapper := &WrapperMessage{"ReplyContact", network.node.rt.me.ID.String(), wrapperMsg}
 
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 
@@ -269,10 +285,17 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		
 
 	} else if message.Id == "store" && replyErr == nil {
-		
+		fmt.Println("Received store")
+		//store data (string) in data map
+		network.node.Store(NewKademliaID(message.GetM5().Contacts[0].ID), message.GetM5().Contacts[0].Address)
+		//send reply
+		packet := &Reply{message.SourceID, "ok"}
+		wrapperMsg := &WrapperMessage_M4{packet}
+		wrapper := &WrapperMessage{"Reply", network.node.rt.me.ID.String(), wrapperMsg}
+		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 
-	} else if message.Id == "Replay" && replyErr == nil {
-
+	} else if message.Id == "Reply" && replyErr == nil {
+		fmt.Println("Got reply " + message.GetM4().Data)
 	} else if message.Id == "ReplyContact" && replyErr == nil {
 		network.mux.Lock()
 		requestID := NewKademliaID(message.GetM5().GetId())

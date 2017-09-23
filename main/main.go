@@ -14,52 +14,12 @@ func main() {
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	//firstNode := NewContact(NewKademliaID("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
-	nw := NewNetwork(firstNodeRT)
+	nw := NewNetwork(NewNode(firstNodeRT))
 	go nw.Listen("localhost", 8000)
 	IDRTList[*firstNode.ID] = nw
 
 	//kademlia := NewKademlia(firstNodeRT)
 
-	/*nodeIDs := []string{"0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"F0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FFF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0FF",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0F",
-		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0"}*/
 	//create 100 nodes
 	for i := 0; i < 100; i++ {
 		port := 8001 + i
@@ -68,33 +28,33 @@ func main() {
 		//ID := NewKademliaID(nodeIDs[i])
 
 		rt := NewRoutingTable(NewContact(ID, a))
-		nw := NewNetwork(rt)
+		nw := NewNetwork(NewNode(rt))
 		go nw.Listen("localhost", port)
 		IDRTList[*ID] = nw
 	}
 	time.Sleep(5000 * time.Millisecond)
-	lastNode := firstNodeRT
+	lastNode := nw
 	//each node joins by doing a lookup on the first node and populating its own table
 	h := 1
 	for k, v := range IDRTList {
 		if k != *firstNode.ID {
 
-			fmt.Println("Ny Nod varv " + strconv.Itoa(h) + ": " + v.rt.me.String())
+			fmt.Println("Ny Nod varv " + strconv.Itoa(h) + ": " + v.node.rt.me.String())
 			kademlia := NewKademlia(v)
 			//Add first contact node to own RT
-			v.rt.AddContact(firstNodeRT.me)
+			v.node.rt.AddContact(firstNodeRT.me)
 
 			//Do lookup on own id
-			lookupResult := kademlia.LookupContact(IDRTList[k].rt.me.ID, IDRTList)
+			lookupResult := kademlia.LookupContact(IDRTList[k].node.rt.me.ID, IDRTList)
 
 			//Add results from lookup to own RT
 			for q := range lookupResult {
 				//fmt.Println(lookupResult[q].String())
-				v.rt.AddContact(lookupResult[q])
+				v.node.rt.AddContact(lookupResult[q])
 			}
 		}
 		time.Sleep(500 * time.Millisecond)
-		lastNode = &v.rt
+		lastNode = v
 		h++	
 	}
 
@@ -114,7 +74,7 @@ func main() {
 	
 	
 	//print the table of the first node
-	fmt.Println("Node: " + firstNode.ID.String())
+	/*fmt.Println("Node: " + firstNode.ID.String())
 	for z := range firstNodeRT.buckets {
 		contactList := firstNodeRT.buckets[z]
 		fmt.Println("Bucket: " + strconv.Itoa(z))
@@ -133,8 +93,15 @@ func main() {
 			contact := elt.Value.(Contact)
 			fmt.Println(contact.String())
 		}
+	}*/
+
+	kademlia := NewKademlia(lastNode)
+	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store", IDRTList)
+	for k1, v := range IDRTList {
+		for k2, v2 := range v.node.data {
+			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
+		}
 	}
-	
 
 	/*data := &Data{[]byte("test")}
 	// ...
