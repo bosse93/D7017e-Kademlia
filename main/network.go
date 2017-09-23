@@ -16,7 +16,7 @@ type Network struct {
 	waitingAnswerList map[KademliaID](chan *WrapperMessage)
 	listenConnection *net.UDPConn
 	threadChannels [](chan string)
-	mux sync.Mutex
+	mux *sync.Mutex
 }
 
 type StringContact struct {
@@ -34,6 +34,7 @@ func NewNetwork(rt *RoutingTable) *Network {
 	network := &Network{}
 	network.rt = *rt
 	network.waitingAnswerList = make(map[KademliaID]chan *WrapperMessage)
+	network.mux = &sync.Mutex{}
 	return network
 }
 
@@ -273,9 +274,11 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 	} else if message.Id == "Replay" && replyErr == nil {
 
 	} else if message.Id == "ReplyContact" && replyErr == nil {
+		network.mux.Lock()
 		requestID := NewKademliaID(message.GetM5().GetId())
 
 		answerChannel := network.waitingAnswerList[*requestID]
+
 		if(answerChannel != nil) {
 			answerChannel <- message
 		} else {
@@ -283,6 +286,7 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		}
 		
 		close(answerChannel)
+		network.mux.Unlock()
 
 	} else {
 		fmt.Println(message.Id)
