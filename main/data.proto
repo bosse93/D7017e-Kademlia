@@ -14,6 +14,12 @@ message RequestData {
   string Id = 1;
 }
 
+message RequestStore {
+    string Id = 1;
+    string Key = 2;
+    string Data = 3;
+}
+
 message Reply {
   string Id = 1;
   string data = 2;

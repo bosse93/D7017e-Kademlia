@@ -9,7 +9,7 @@ import (
 func main() {
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
-	nw := NewNetwork(firstNodeRT)
+	nw := NewNetwork(NewNode(firstNodeRT))
 	go nw.Listen("localhost", 8000)
 
 	time.Sleep(500 * time.Millisecond)	
