@@ -32,11 +32,12 @@ message ReplyContact {
 
 message WrapperMessage {
     string id = 1;
+    string sourceID = 2;
     oneof msg {
-        RequestPing m1 = 2;
-        RequestContact m2 = 3;
-        RequestData m3 = 4;
-        Reply m4 = 5;
-        ReplyContact m5 = 6;
+        RequestPing m1 = 3;
+        RequestContact m2 = 4;
+        RequestData m3 = 5;
+        Reply m4 = 6;
+        ReplyContact m5 = 7;
     }
 }
