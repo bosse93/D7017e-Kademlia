@@ -155,7 +155,6 @@ func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, 
 	sendChannel <-findContactReturn
 	//Add asker node to the asked ones RT. Should not be done here but in the other nodes client/RT
 	//network[*destination.ID].rt.AddContact(kademlia.rt.me)
-	network[*destination.ID].node.rt.AddContact(kademlia.rt.me)
 	select {
 		//If channel is closed main thread have decided Lookup is done. Close own channel and end recursion.
 		case nextDestination, ok := <-recieveChannel:
@@ -215,7 +214,7 @@ func (kademlia *Kademlia) LookupData(hash string) {
 }
 
 func (kademlia *Kademlia) Store(key *KademliaID, data string, network map[KademliaID]*Network) {
-	contacts := kademlia.LookupContact(key, network)
+	contacts := kademlia.LookupContact(key)
 	for i := 0 ; i < len(contacts); i++ {
 		kademlia.networkTest.SendStoreMessage(key.String(), data, contacts[i].Address)
 	}

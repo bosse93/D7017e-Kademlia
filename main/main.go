@@ -25,7 +25,7 @@ func main() {
 		rt := NewRoutingTable(NewContact(ID, a))
 		nodeList = append(nodeList, rt)
 		rt.AddContact(firstNodeRT.me)
-		nw := NewNetwork(rt)
+		nw := NewNetwork(NewNode(rt))
 		fmt.Println("Ny Nod varv " + strconv.Itoa(i+1) + ": " + rt.me.String())
 		go nw.Listen("localhost", port)
 		time.Sleep(500 * time.Millisecond)
@@ -34,13 +34,23 @@ func main() {
 		lookupResult := kademlia.LookupContact(ID)
 
 		for q := range lookupResult {
-				rt.AddContact(lookupResult[q])
+			rt.AddContact(lookupResult[q])
 		}	
 			
 	}
 
 	printFirstNodeRT(firstNode, firstNodeRT)
 	printLastNodeRT(nodeList)
+
+	/*
+	kademlia := NewKademlia(lastNode)
+	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store", IDRTList)
+	for k1, v := range IDRTList {
+		for k2, v2 := range v.node.data {
+			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
+		}
+	}
+	*/
 	
 }
 
@@ -65,14 +75,6 @@ func printLastNodeRT(nodeList []*RoutingTable) {
 		for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
 			contact := elt.Value.(Contact)
 			fmt.Println(contact.String())
-		}
-	}*/
-
-	kademlia := NewKademlia(lastNode)
-	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store", IDRTList)
-	for k1, v := range IDRTList {
-		for k2, v2 := range v.node.data {
-			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
 		}
 	}
 }
