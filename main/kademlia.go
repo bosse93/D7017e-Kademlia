@@ -10,27 +10,21 @@ import (
 type Kademlia struct {
 	closest ContactCandidates
 	asked map[KademliaID]bool
-	round map[Round][]Contact
 	threadChannels [3]chan []Contact
 	rt *RoutingTable
-	networkTest Network
+	network Network
 	numberOfIdenticalAnswersInRow int
 	noMoreNodesTimeout int
 	done bool
 	threadCount int
 }
 
-type Round struct {
-	round int
-	thread int
-}
 
 func NewKademlia(nw *Network) *Kademlia {
 	kademlia := &Kademlia{}
 	kademlia.asked = make(map[KademliaID]bool)
-	kademlia.round = make(map[Round][]Contact)
-	kademlia.networkTest = *nw
-	kademlia.rt = kademlia.networkTest.node.rt
+	kademlia.network = *nw
+	kademlia.rt = kademlia.network.node.rt
 	kademlia.numberOfIdenticalAnswersInRow = 0
 	kademlia.noMoreNodesTimeout = 0
 	kademlia.done = false
@@ -140,21 +134,13 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID) []Contact {
 	
 
 func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, sendChannel chan []Contact, recieveChannel chan Contact, threadNmbr int)  {
-	//Sleep random. Simulating a network call to destination.
-	//sleepTime := rand.Intn(20)
-	//time.Sleep(time.Duration(sleepTime) * time.Millisecond)
-	//Should be network call and add to channel what the destination node answers.
-	//Channel buffer is 2. If channel is full will wait until mainThread have recieved at least one answer.
-	//fmt.Println("Thread " + strconv.Itoa(threadNmbr) + ":" + " Sent ping to " + destination.Address) 
-	findContactReturn := kademlia.networkTest.SendFindContactMessage(&destination, target)
-	//fmt.Println("Thread " + strconv.Itoa(threadNmbr) + ": Recieved answer from " + pingReturn)
-	//sendChannel <-network[*destination.ID].rt.FindClosestContacts(target, 20)
+	
+	findContactReturn := kademlia.network.SendFindContactMessage(&destination, target)
 	for i := range findContactReturn {
 		findContactReturn[i].CalcDistance(target)
 	}
+	
 	sendChannel <-findContactReturn
-	//Add asker node to the asked ones RT. Should not be done here but in the other nodes client/RT
-	//network[*destination.ID].rt.AddContact(kademlia.rt.me)
 	select {
 		//If channel is closed main thread have decided Lookup is done. Close own channel and end recursion.
 		case nextDestination, ok := <-recieveChannel:
@@ -169,7 +155,7 @@ func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, 
 }
 
 func (kademlia *Kademlia) answerHelper(answer []Contact) {
-	if(len(answer) == 0) {
+	if(len(answer) == 0 || ((answer[0].ID.String() == "0000000000000000000000000000000000000000") && (answer[0].Address == "0.0.0.0:0000"))){
 		return
 	}
 	same := true
@@ -213,9 +199,9 @@ func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO
 }
 
-func (kademlia *Kademlia) Store(key *KademliaID, data string, network map[KademliaID]*Network) {
+func (kademlia *Kademlia) Store(key *KademliaID, data string) {
 	contacts := kademlia.LookupContact(key)
 	for i := 0 ; i < len(contacts); i++ {
-		kademlia.networkTest.SendStoreMessage(key.String(), data, contacts[i].Address)
+		kademlia.network.SendStoreMessage(key.String(), data, contacts[i].Address)
 	}
 }

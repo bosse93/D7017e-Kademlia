@@ -3,16 +3,14 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"time"
+	//"time"
 )
 
 func main() {
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
-	nw := NewNetwork(NewNode(firstNodeRT))
-	go nw.Listen("localhost", 8000)
-
-	time.Sleep(500 * time.Millisecond)	
+	NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
+		
 	nodeList := []*RoutingTable{firstNodeRT}
 	
 	//create 100 nodes
@@ -25,10 +23,10 @@ func main() {
 		rt := NewRoutingTable(NewContact(ID, a))
 		nodeList = append(nodeList, rt)
 		rt.AddContact(firstNodeRT.me)
-		nw := NewNetwork(NewNode(rt))
+		nw := NewNetwork(NewNode(rt), "localhost", port)
 		fmt.Println("Ny Nod varv " + strconv.Itoa(i+1) + ": " + rt.me.String())
-		go nw.Listen("localhost", port)
-		time.Sleep(500 * time.Millisecond)
+		//go nw.Listen("localhost", port)
+		//time.Sleep(500 * time.Millisecond)
 		kademlia := NewKademlia(nw)
 
 		lookupResult := kademlia.LookupContact(ID)
