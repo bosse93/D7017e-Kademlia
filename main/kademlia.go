@@ -39,7 +39,7 @@ func NewKademlia(nw *Network) *Kademlia {
 	return kademlia
 }
 
-func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[KademliaID]*Network) []Contact {
+func (kademlia *Kademlia) LookupContact(target *KademliaID) []Contact {
 	kademlia.closest = NewContactCandidates()
 	//Find up to alpha contacts closest to target in own RT
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target, 3)) //3 räcker?
@@ -51,7 +51,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 	//Start up to alpha threads on unique buffered channels (Async).
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
 		kademlia.threadChannels[i] = make(chan []Contact, 2)
-		go kademlia.LookupHelper(target, kademlia.closest.contacts[i], network, kademlia.threadChannels[i], destinationChannel, kademlia.threadCount + 1)
+		go kademlia.LookupHelper(target, kademlia.closest.contacts[i], kademlia.threadChannels[i], destinationChannel, kademlia.threadCount + 1)
 		kademlia.threadCount++
 		kademlia.asked[*kademlia.closest.contacts[i].ID] = true
 	}
@@ -101,7 +101,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 					kademlia.noMoreNodesTimeout = 0
 					if kademlia.threadCount < 3 {
 						kademlia.threadChannels[kademlia.threadCount] = make(chan []Contact, 2)
-						go kademlia.LookupHelper(target, destinationContact, network, kademlia.threadChannels[kademlia.threadCount], destinationChannel, kademlia.threadCount + 1)
+						go kademlia.LookupHelper(target, destinationContact, kademlia.threadChannels[kademlia.threadCount], destinationChannel, kademlia.threadCount + 1)
 						kademlia.threadCount++
 						kademlia.asked[*destinationContact.ID] = true
 					} else {
@@ -139,7 +139,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, network map[Kademlia
 
 	
 
-func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, network map[KademliaID]*Network, sendChannel chan []Contact, recieveChannel chan Contact, threadNmbr int)  {
+func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, sendChannel chan []Contact, recieveChannel chan Contact, threadNmbr int)  {
 	//Sleep random. Simulating a network call to destination.
 	//sleepTime := rand.Intn(20)
 	//time.Sleep(time.Duration(sleepTime) * time.Millisecond)
@@ -154,13 +154,13 @@ func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, 
 	}
 	sendChannel <-findContactReturn
 	//Add asker node to the asked ones RT. Should not be done here but in the other nodes client/RT
-	network[*destination.ID].rt.AddContact(kademlia.rt.me)
+	//network[*destination.ID].rt.AddContact(kademlia.rt.me)
 	select {
 		//If channel is closed main thread have decided Lookup is done. Close own channel and end recursion.
 		case nextDestination, ok := <-recieveChannel:
 			if ok {
 				//Found contact in destination channel. Ask the node!
-				kademlia.LookupHelper(target, nextDestination, network, sendChannel, recieveChannel, threadNmbr)
+				kademlia.LookupHelper(target, nextDestination, sendChannel, recieveChannel, threadNmbr)
 			} else {
 				close(sendChannel)
 				break

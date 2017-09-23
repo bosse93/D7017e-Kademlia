@@ -132,7 +132,7 @@ func (network *Network) SendPingMessage(contact *Contact) Contact{
 
 	packet := &RequestPing{messageID.String()}
 	wrapperMsg := &WrapperMessage_M1{packet}
-	wrapper := &WrapperMessage{"ping", wrapperMsg}
+	wrapper := &WrapperMessage{"ping", network.rt.me.ID.String(),wrapperMsg}
 	
 	answerChannel := make(chan *WrapperMessage)
 	network.AddToChannelMap(*messageID, answerChannel)
@@ -185,11 +185,10 @@ func (network *Network) SendFindContactMessage(contact *Contact, targetID *Kadem
 
 	packet := &RequestContact{messageID.String(), targetID.String()}  //EDIT ME
 	wrapperMsg := &WrapperMessage_M2{packet}
-	wrapper := &WrapperMessage{"RequestContact", wrapperMsg}
+	wrapper := &WrapperMessage{"RequestContact", network.rt.me.ID.String(), wrapperMsg}
 
 	answerChannel := make(chan *WrapperMessage, 1)
 	network.AddToChannelMap(*messageID, answerChannel)
-
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
 
 	wrapper = network.waitForAnswer(answerChannel)
@@ -244,24 +243,24 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		packet := &ReplyContact{message.GetM1().Id, kontakter}
 
 		wrapperMsg := &WrapperMessage_M5{packet}
-		wrapper := &WrapperMessage{"ReplyContact", wrapperMsg}
+		wrapper := &WrapperMessage{"ReplyContact", network.rt.me.ID.String(), wrapperMsg}
 
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 		
 		
 	} else if message.Id == "RequestContact" && replyErr == nil {
 		closestContacts := network.rt.FindClosestContacts(NewKademliaID(message.GetM2().Target), 20)
-		
+		network.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
+
 		kontakter := []*ReplyContact_Contact{}
 		for i := range closestContacts {
 			contakter := &ReplyContact_Contact{closestContacts[i].ID.String(), closestContacts[i].Address, closestContacts[i].String()}
 			kontakter = append(kontakter, contakter)
 		}
 
-
 		packet := &ReplyContact{message.GetM2().GetId(), kontakter}
 		wrapperMsg := &WrapperMessage_M5{packet}
-		wrapper := &WrapperMessage{"ReplyContact", wrapperMsg}
+		wrapper := &WrapperMessage{"ReplyContact", network.rt.me.ID.String(), wrapperMsg}
 
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 
