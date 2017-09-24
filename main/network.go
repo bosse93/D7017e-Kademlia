@@ -3,7 +3,7 @@ package main
 import (
 	"net"
 	"log"
-	"D7024e-Kademlia/protobuf/proto"
+	"D7024e-Kademlia/github.com/protobuf/proto"
 	"fmt"
 	"strconv"
 	"time"
