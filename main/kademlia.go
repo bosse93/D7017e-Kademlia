@@ -201,6 +201,7 @@ func (kademlia *Kademlia) answerHelper(answer []Contact) {
 }
 
 func (kademlia *Kademlia) LookupData(hash string) string {
+	fmt.Println("starting lookup")
 	c := make(chan string)
 	kademlia.network.setupDataChannel(*NewKademliaID(hash), &c)
 	kademlia.LookupContact(NewKademliaID(hash), true)
@@ -211,9 +212,10 @@ func (kademlia *Kademlia) LookupData(hash string) string {
 	}
 }
 
-func (kademlia *Kademlia) Store(key *KademliaID, data string) {
+func (kademlia *Kademlia) Store(key *KademliaID, data string) bool {
 	contacts := kademlia.LookupContact(key, false)
 	for i := 0 ; i < len(contacts); i++ {
 		kademlia.network.SendStoreMessage(key.String(), data, contacts[i].Address)
 	}
+	return true
 }

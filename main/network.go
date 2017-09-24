@@ -175,10 +175,12 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 
 	} else if message.Id == "RequestData" && replyErr == nil {
+		fmt.Println("requesting data")
 		packet := &ReplyData{}
 		network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
 		packet.Id = message.GetM3().Id
 		if val, ok := network.node.data[NewKademliaID(message.GetM3().Key)]; ok {
+			fmt.Println("data found")
 			packet.ReturnType = "data"
 			reply := &Reply{message.GetM3().Key, val}
 			dataPacket := &ReplyData_ReplyData{reply}
@@ -228,6 +230,7 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		close(answerChannel)
 
 	} else if message.Id == "ReplyData" {
+		fmt.Println("received data reply")
 		requestID := NewKademliaID(message.GetReplyData().GetId())
 
 		network.mux.Lock()
@@ -235,6 +238,7 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		network.mux.Unlock()
 
 		if message.GetReplyData().ReturnType == "data" {
+			fmt.Println("data reply contains data")
 			returnChannel := *network.returnDataChannels[*NewKademliaID(message.GetReplyData().GetReplyData().Id)]
 			returnChannel <- message.GetReplyData().GetReplyData().Data
 		}

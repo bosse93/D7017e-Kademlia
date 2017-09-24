@@ -98,7 +98,10 @@ func runTest() {
 
 
 	kademlia := NewKademlia(lastNetwork)
-	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store")
+	done := kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store")
+	fmt.Println("done " + strconv.FormatBool(done))
+	data := kademlia.LookupData("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+	fmt.Println("Data returned" + data)
 	/*for k1, v := range IDRTList {
 		for k2, v2 := range v.node.data {
 			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
