@@ -12,6 +12,7 @@ message RequestContact {
 
 message RequestData {
   string Id = 1;
+  string Key = 2;
 }
 
 message RequestStore {
@@ -36,6 +37,15 @@ message ReplyContact {
   repeated Contact Contacts = 2;
 }
 
+message ReplyData {
+    string id = 1;
+    string returnType = 2;
+    oneof msg {
+        Reply replyData = 3;
+        ReplyContact replyContact = 4;
+    }
+}
+
 message WrapperMessage {
     string id = 1;
     string sourceID = 2;
@@ -45,5 +55,6 @@ message WrapperMessage {
         RequestData m3 = 5;
         Reply m4 = 6;
         ReplyContact m5 = 7;
+        ReplyData replyData = 8;
     }
 }

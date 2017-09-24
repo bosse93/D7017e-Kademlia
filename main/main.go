@@ -29,7 +29,7 @@ func main() {
 		//time.Sleep(500 * time.Millisecond)
 		kademlia := NewKademlia(nw)
 
-		lookupResult := kademlia.LookupContact(ID)
+		lookupResult := kademlia.LookupContact(ID, false)
 
 		for q := range lookupResult {
 			rt.AddContact(lookupResult[q])
