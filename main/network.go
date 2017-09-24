@@ -101,8 +101,9 @@ func (network *Network) SendFindContactMessage(contact *Contact, targetID *Kadem
 	}
 }
 
+/*
 func (network *Network) SendFindDataMessage(hash string, contact Contact) []Contact {
-	/*messageID := NewRandomKademliaID()
+	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	CheckError(err)
 
@@ -124,8 +125,8 @@ func (network *Network) SendFindDataMessage(hash string, contact Contact) []Cont
 		fmt.Println("Timeout")
 		contactList = append(contactList, NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "0.0.0.0:0000"))
 		return contactList
-	}*/
-}
+	}
+}*/
 
 func (network *Network) SendStoreMessage(hash string, data string, address string) {
 	fmt.Println("Sending store message")

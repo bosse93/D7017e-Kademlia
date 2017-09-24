@@ -3,22 +3,69 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"os"
+	"github.com/urfave/cli"
 	//"time"
+	"sort"
 )
 
 func main() {
+
+	app := cli.NewApp()
+
+	app.Flags = []cli.Flag {
+		cli.StringFlag{
+			Name: "lang, l",
+			Value: "english",
+			Usage: "Language for the greeting",
+		},
+		cli.StringFlag{
+			Name: "config, c",
+			Usage: "Load configuration from `FILE`",
+		},
+	}
+
+	app.Commands = []cli.Command{
+		{
+			Name:    "run",
+			Aliases: []string{"r"},
+			Usage:   "runs old main",
+			Action:  func(c *cli.Context) error {
+				runTest()
+				return nil
+			},
+		},
+		{
+			Name:    "add",
+			Aliases: []string{"a"},
+			Usage:   "add a task to the list",
+			Action:  func(c *cli.Context) error {
+				fmt.Println("added shit")
+				return nil
+			},
+		},
+	}
+
+	sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.CommandsByName(app.Commands))
+
+	app.Run(os.Args)
+	
+}
+
+func runTest() {
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 	NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
-		
+
 	nodeList := []*RoutingTable{firstNodeRT}
-	
+
 	//create 100 nodes
 	for i := 0; i < 100; i++ {
 		port := 8001 + i
 		a := "localhost:" + strconv.Itoa(port)
 
-		
+
 		ID := NewRandomKademliaID()
 		rt := NewRoutingTable(NewContact(ID, a))
 		nodeList = append(nodeList, rt)
@@ -33,8 +80,8 @@ func main() {
 
 		for q := range lookupResult {
 			rt.AddContact(lookupResult[q])
-		}	
-			
+		}
+
 	}
 
 	printFirstNodeRT(firstNode, firstNodeRT)
@@ -49,7 +96,6 @@ func main() {
 		}
 	}
 	*/
-	
 }
 
 func printFirstNodeRT(firstNode Contact, firstNodeRT *RoutingTable) {
@@ -89,4 +135,6 @@ func printAllNodesRT(nodeList []*RoutingTable) {
 			}
 		}
 	}
+
+
 }
