@@ -13,6 +13,7 @@ import (
 type Network struct {
 	node *Node
 	waitingAnswerList map[KademliaID](chan *WrapperMessage)
+	returnDataChannels map[KademliaID](*chan string)
 	listenConnection *net.UDPConn
 	threadChannels [](chan string)
 	mux *sync.Mutex
@@ -101,7 +102,7 @@ func (network *Network) SendFindContactMessage(contact *Contact, targetID *Kadem
 	}
 }
 
-/*
+
 func (network *Network) SendFindDataMessage(hash string, contact Contact) []Contact {
 	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)
@@ -126,7 +127,7 @@ func (network *Network) SendFindDataMessage(hash string, contact Contact) []Cont
 		contactList = append(contactList, NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "0.0.0.0:0000"))
 		return contactList
 	}
-}*/
+}
 
 func (network *Network) SendStoreMessage(hash string, data string, address string) {
 	fmt.Println("Sending store message")
@@ -174,27 +175,30 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 
 	} else if message.Id == "RequestData" && replyErr == nil {
-		/*packet := &ReplyData{}
+		packet := &ReplyData{}
 		network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
 		packet.Id = message.GetM3().Id
 		if val, ok := network.node.data[NewKademliaID(message.GetM3().Key)]; ok {
-			packet.returnType = "data"
-			dataPacket := &Reply{message.GetM3().Id, val}
-			packet.Data = dataPacket
+			packet.ReturnType = "data"
+			reply := &Reply{message.GetM3().Key, val}
+			dataPacket := &ReplyData_ReplyData{reply}
+			packet.Msg = dataPacket
 		} else {
-			packet.returnType = "contact"
+			packet.ReturnType = "contact"
 			closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetM3().Key), 20)
 			contactListReply := []*ReplyContact_Contact{}
 			for i := range closestContacts {
 				contactReply := &ReplyContact_Contact{closestContacts[i].ID.String(), closestContacts[i].Address, closestContacts[i].String()}
 				contactListReply = append(contactListReply, contactReply)
 			}
-			contactPacket := &ReplyContact{message.GetM3().Key, contactListReply}
+			reply := &ReplyContact{message.GetM3().Key, contactListReply}
+			contactPacket := &ReplyData_ReplyContact{reply}
+			packet.Msg = contactPacket
 		}
 		wrapperMsg := &WrapperMessage_ReplyData{packet}
 		wrapper := &WrapperMessage{"ReplyData", network.node.rt.me.ID.String(), wrapperMsg}
 
-		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)*/
+		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 
 	} else if message.Id == "store" && replyErr == nil {
 		fmt.Println("Received store")
@@ -224,18 +228,22 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		close(answerChannel)
 
 	} else if message.Id == "ReplyData" {
-		/*requestID := NewKademliaID(message.GetReplyData().GetId())
+		requestID := NewKademliaID(message.GetReplyData().GetId())
 
 		network.mux.Lock()
 		answerChannel := network.waitingAnswerList[*requestID]
 		network.mux.Unlock()
 
+		if message.GetReplyData().ReturnType == "data" {
+			returnChannel := *network.returnDataChannels[*NewKademliaID(message.GetReplyData().GetReplyData().Id)]
+			returnChannel <- message.GetReplyData().GetReplyData().Data
+		}
 		if answerChannel != nil {
 			answerChannel <- message
 		} else {
 			fmt.Println("Forged Reply")
 		}
-		close(answerChannel)*/
+		close(answerChannel)
 	} else {
 		fmt.Println(message.Id)
 		log.Println("Something went wrong in Listen, err: ", replyErr)
@@ -290,5 +298,9 @@ func (network *Network) sendPacket(data []byte, targetAddress *net.UDPAddr) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func (network *Network) setupDataChannel(id KademliaID, c *chan string) {
+	network.returnDataChannels[id] = c
 }
 

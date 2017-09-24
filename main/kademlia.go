@@ -5,6 +5,7 @@ import (
 	//"fmt"
 	"math/rand"
 	//"strconv"
+	"fmt"
 )
 
 type Kademlia struct {
@@ -134,26 +135,26 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) []Con
 	
 
 func (kademlia *Kademlia) LookupHelper(target *KademliaID, destination Contact, sendChannel chan []Contact, recieveChannel chan Contact, threadNmbr int, findData bool)  {
-	if (findData) {
-		/*findContactReturn := kademlia.network.SendFindDataMessage(target.String(), destination)*/
-
+	findContactReturn := []Contact{}
+	if findData {
+		findContactReturn = kademlia.network.SendFindDataMessage(target.String(), destination)
 	} else {
-		findContactReturn := kademlia.network.SendFindContactMessage(&destination, target)
-		for i := range findContactReturn {
-			findContactReturn[i].CalcDistance(target)
-		}
+		findContactReturn = kademlia.network.SendFindContactMessage(&destination, target)
+	}
 
-		sendChannel <-findContactReturn
-		select {
-		//If channel is closed main thread have decided Lookup is done. Close own channel and end recursion.
-		case nextDestination, ok := <-recieveChannel:
-			if ok {
-				//Found contact in destination channel. Ask the node!
-				kademlia.LookupHelper(target, nextDestination, sendChannel, recieveChannel, threadNmbr, findData)
-			} else {
-				close(sendChannel)
-				break
-			}
+	for i := range findContactReturn {
+		findContactReturn[i].CalcDistance(target)
+	}
+	sendChannel <-findContactReturn
+	select {
+	//If channel is closed main thread have decided Lookup is done. Close own channel and end recursion.
+	case nextDestination, ok := <-recieveChannel:
+		if ok {
+			//Found contact in destination channel. Ask the node!
+			kademlia.LookupHelper(target, nextDestination, sendChannel, recieveChannel, threadNmbr, findData)
+		} else {
+			close(sendChannel)
+			break
 		}
 	}
 }
@@ -199,11 +200,15 @@ func (kademlia *Kademlia) answerHelper(answer []Contact) {
 	kademlia.closest.Append(newCandidates)
 }
 
-func (kademlia *Kademlia) LookupData(hash string) {
+func (kademlia *Kademlia) LookupData(hash string) string {
+	c := make(chan string)
+	kademlia.network.setupDataChannel(*NewKademliaID(hash), &c)
 	kademlia.LookupContact(NewKademliaID(hash), true)
-	//create channel here to return data?
-	//kademlia.dataChannel := make...
-	//when data is received return and close, if lookup finishes without finding data, send fail to this channel
+	select {
+	case x := <-c:
+		fmt.Println("got data" + x)
+		return x
+	}
 }
 
 func (kademlia *Kademlia) Store(key *KademliaID, data string) {

@@ -56,10 +56,10 @@ func main() {
 func runTest() {
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
-	NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
+	lastNetwork := NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
 
 	nodeList := []*RoutingTable{firstNodeRT}
-
+	//lastNode := firstNode
 	//create 100 nodes
 	for i := 0; i < 100; i++ {
 		port := 8001 + i
@@ -81,21 +81,21 @@ func runTest() {
 		for q := range lookupResult {
 			rt.AddContact(lookupResult[q])
 		}
-
+		lastNetwork = nw
 	}
 
 	printFirstNodeRT(firstNode, firstNodeRT)
 	printLastNodeRT(nodeList)
 
-	/*
-	kademlia := NewKademlia(lastNode)
-	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store", IDRTList)
-	for k1, v := range IDRTList {
+
+	kademlia := NewKademlia(lastNetwork)
+	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store")
+	/*for k1, v := range IDRTList {
 		for k2, v2 := range v.node.data {
 			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
 		}
-	}
-	*/
+	}*/
+
 }
 
 func printFirstNodeRT(firstNode Contact, firstNodeRT *RoutingTable) {
