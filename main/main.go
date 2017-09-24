@@ -40,7 +40,16 @@ func main() {
 			Aliases: []string{"a"},
 			Usage:   "add a task to the list",
 			Action:  func(c *cli.Context) error {
-				fmt.Println("added shit")
+				saved := ""
+				if c.NArg() > 0 {
+					saved = c.Args().Get(0)
+				}
+				if c.String("lang") == "spanish" {
+					fmt.Println("hola", saved)
+				} else {
+					fmt.Println("Added", saved)
+				}
+
 				return nil
 			},
 		},
