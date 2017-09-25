@@ -12,44 +12,61 @@ import (
 func main() {
 
 	app := cli.NewApp()
-
-	app.Flags = []cli.Flag {
-		cli.StringFlag{
-			Name: "lang, l",
-			Value: "english",
-			Usage: "Language for the greeting",
-		},
-		cli.StringFlag{
-			Name: "config, c",
-			Usage: "Load configuration from `FILE`",
-		},
-	}
-
 	app.Commands = []cli.Command{
 		{
 			Name:    "run",
 			Aliases: []string{"r"},
-			Usage:   "runs old main",
+			Usage:   "runs runTest()",
 			Action:  func(c *cli.Context) error {
 				runTest()
 				return nil
 			},
 		},
 		{
-			Name:    "add",
-			Aliases: []string{"a"},
-			Usage:   "add a task to the list",
+			Name:    "store",
+			Aliases: []string{"s"},
+			Usage:   "Store arg0",
 			Action:  func(c *cli.Context) error {
-				saved := ""
 				if c.NArg() > 0 {
-					saved = c.Args().Get(0)
-				}
-				if c.String("lang") == "spanish" {
-					fmt.Println("hola", saved)
-				} else {
-					fmt.Println("Added", saved)
-				}
+					//store c.Args().First()
 
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "cat",
+			Aliases: []string{"c"},
+			Usage:   "Prints content of arg0",
+			Action:  func(c *cli.Context) error {
+				if c.NArg() > 0 {
+					//cat c.Args().First()
+
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "pin",
+			Aliases: []string{"p"},
+			Usage:   "Pins arg0",
+			Action:  func(c *cli.Context) error {
+				if c.NArg() > 0 {
+					//pin c.Args().First()
+
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "unpin",
+			Aliases: []string{"u"},
+			Usage:   "Unpins arg0",
+			Action:  func(c *cli.Context) error {
+				if c.NArg() > 0 {
+					//unpin c.Args().First()
+
+				}
 				return nil
 			},
 		},
@@ -59,8 +76,19 @@ func main() {
 	sort.Sort(cli.CommandsByName(app.Commands))
 
 	app.Run(os.Args)
-	
+
+	//FÖR AXEL
+	//runTest()
 }
+	
+
+
+/*func start() {
+	node := NewContact(NewRandomKademliaID(), "localhost:8000")
+	routingTable := NewRoutingTable(node)
+	network := NewNetwork(NewNode(routingTable), "localhost", 8000)
+
+}*/
 
 func runTest() {
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
