@@ -23,8 +23,9 @@ Gör Kademlia object.
 Finddata på arg 1. Download sker antagligen i finddata.
 
 
-Cat:
+Cat arg1:
 Gör Kademlia object
+Finddata på arg. 
 TODO
 
 
