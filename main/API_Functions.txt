@@ -1,0 +1,37 @@
+Start:
+Gör ett nätverksobjekt. Placera i structen. Måste minnas sitt nätverksobjekt.
+
+
+Join arg1:
+Gör nätverk, kademlia, Node(?). 
+Minns nätverk och node(?). Nytt kademlia object behövs ej minnas
+Lookup på arg 1
+
+
+Stop:
+Dunno. Typ förstör objekten. Lär nog ha nån funktion som rensar också. Dvs stänger nätverks listern osv
+
+
+Store arg1:
+Gör Kademlia object.
+Finddata på arg 1. 
+Om datan hittas behövs den ej storas. Hittas data ej storas den. Tror det sköts i finddata funk dock.
+
+
+Find/Download data arg1:
+Gör Kademlia object.
+Finddata på arg 1. Download sker antagligen i finddata.
+
+
+Cat:
+Gör Kademlia object
+TODO
+
+
+Pin:
+TODO
+
+
+Unpin:
+TODO
+
