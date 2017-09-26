@@ -3,15 +3,16 @@ package main
 import (
 	"fmt"
 	"strconv"
-	"os"
-	"D7024e-Kademlia/github.com/urfave/cli"
+	//"os"
+	//"D7024e-Kademlia/github.com/urfave/cli"
 	//"time"
-	"sort"
+	//"sort"
+	"time"
 )
 
 func main() {
-
-	app := cli.NewApp()
+	runTest()
+	/*app := cli.NewApp()
 
 	app.Flags = []cli.Flag {
 		cli.StringFlag{
@@ -58,7 +59,7 @@ func main() {
 	sort.Sort(cli.FlagsByName(app.Flags))
 	sort.Sort(cli.CommandsByName(app.Commands))
 
-	app.Run(os.Args)
+	app.Run(os.Args)*/
 	
 }
 
@@ -70,7 +71,7 @@ func runTest() {
 	nodeList := []*RoutingTable{firstNodeRT}
 	//lastNode := firstNode
 	//create 100 nodes
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		port := 8001 + i
 		a := "localhost:" + strconv.Itoa(port)
 
@@ -98,10 +99,11 @@ func runTest() {
 
 
 	kademlia := NewKademlia(lastNetwork)
-	done := kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store")
-	fmt.Println("done " + strconv.FormatBool(done))
+	go kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store")
+	time.Sleep(3*time.Second)
 	data := kademlia.LookupData("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
-	fmt.Println("Data returned" + data)
+	fmt.Println("Data returned " + data)
+
 	/*for k1, v := range IDRTList {
 		for k2, v2 := range v.node.data {
 			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
