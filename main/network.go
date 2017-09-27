@@ -12,7 +12,7 @@ import (
 
 type Network struct {
 	node *Node
-	waitingAnswerList map[KademliaID](chan *WrapperMessage)
+	waitingAnswerList map[KademliaID](chan interface{})
 	//returnDataChannels map[KademliaID](chan string)
 	listenConnection *net.UDPConn
 	threadChannels [](chan string)
@@ -28,7 +28,7 @@ func NewNetwork(node *Node, ip string, port int) *Network {
 	network := &Network{}
 	network.node = node
 	//network.returnDataChannels = make(map[KademliaID]chan string)
-	network.waitingAnswerList = make(map[KademliaID]chan *WrapperMessage)
+	network.waitingAnswerList = make(map[KademliaID]chan interface{})
 	network.mux = &sync.Mutex{}
 
 	// ESTABLISH UDP CONNECTION
@@ -59,7 +59,7 @@ func (network *Network) Listen(buf []byte) {
 	}
 }
 
-
+/*
 func (network *Network) SendPingMessage(contact *Contact) Contact{
 	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)
@@ -81,8 +81,9 @@ func (network *Network) SendPingMessage(contact *Contact) Contact{
 		return NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "0.0.0.0:0000")
 	}
 }
+*/
 
-func (network *Network) SendFindContactMessage(contact *Contact, targetID *KademliaID) []Contact{
+func (network *Network) SendFindContactMessage(targetID *KademliaID, contact *Contact, returnChannel chan interface{}) {
 	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	CheckError(err)
@@ -91,25 +92,14 @@ func (network *Network) SendFindContactMessage(contact *Contact, targetID *Kadem
 	wrapperMsg := &WrapperMessage_M2{packet}
 	wrapper := &WrapperMessage{"RequestContact", network.node.rt.me.ID.String(), wrapperMsg}
 
-	answerChannel := network.createChannel(*messageID)
+	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
-	wrapper = network.waitForAnswer(answerChannel)
-
-	contactList := []Contact{}
-	if(wrapper != nil) {
-		for i := range wrapper.GetM5().GetContacts() {
-			contactList = append(contactList, NewContact(NewKademliaID(wrapper.GetM5().Contacts[i].GetID()), wrapper.GetM5().Contacts[i].GetAddress()))
-		}
-		return contactList
-	} else {
-		fmt.Println("Timeout")
-		contactList = append(contactList, NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "0.0.0.0:0000"))
-		return contactList
-	}
+	
+	go network.TimeoutWaiter(5, returnChannel, messageID)
 }
 
 
-func (network *Network) SendFindDataMessage(hash string, contact *Contact) DataReturn {
+func (network *Network) SendFindDataMessage(hash string, contact *Contact, returnChannel chan interface{}) {
 	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	CheckError(err)
@@ -118,32 +108,13 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact) DataR
 	wrapperMsg := &WrapperMessage_M3{packet}
 	wrapper := &WrapperMessage{"RequestData", network.node.rt.me.ID.String(), wrapperMsg}
 
-	answerChannel := network.createChannel(*messageID)
+	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
-	wrapper = network.waitForAnswer(answerChannel)
+	
 
-	dataReturn := DataReturn{[]Contact{}, ""}
-	if(wrapper != nil) {
-		if wrapper.GetReplyData().ReturnType == "data" {
-			fmt.Println("sending data back: " + wrapper.GetReplyData().GetReplyData().Data)
-			//network.returnDataChannels[*NewKademliaID(wrapper.GetReplyData().GetReplyData().Id)] <- wrapper.GetReplyData().GetReplyData().Data
-			dataReturn.contacts = append(dataReturn.contacts, NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "0.0.0.0:0000"))
-			dataReturn.data = wrapper.GetReplyData().GetReplyData().Data
-		} else {
-			for i := range wrapper.GetReplyData().GetReplyContact().Contacts {
-				contact := wrapper.GetReplyData().GetReplyContact().Contacts[i]
-				dataReturn.contacts = append(dataReturn.contacts, NewContact(NewKademliaID(contact.GetID()), contact.GetAddress()))
-			}
-		}
-	} else {
-		fmt.Println("Timeout")
-		dataReturn.contacts = append(dataReturn.contacts, NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "0.0.0.0:0000"))
-	}
-	fmt.Println("returning data: " + dataReturn.data + " " + dataReturn.contacts[0].ID.String())
-	return dataReturn
 }
 
-func (network *Network) SendStoreMessage(hash string, data string, address string) {
+func (network *Network) SendStoreMessage(hash string, data string, address string, returnChannel chan interface{}) {
 	fmt.Println("Sending store message")
 	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", address)
@@ -154,11 +125,9 @@ func (network *Network) SendStoreMessage(hash string, data string, address strin
 	wrapperMsg := &WrapperMessage_M5{packet}
 	wrapper := &WrapperMessage{"store", network.node.rt.me.ID.String(), wrapperMsg}
 
-	answerChannel := network.createChannel(*messageID)
+	network.createChannel(messageID, returnChannel)
 
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
-
-	wrapper = network.waitForAnswer(answerChannel)
 }
 
 func (network *Network) handleRequest(message *WrapperMessage, replyErr error, sourceAddress *net.UDPAddr) {
@@ -192,29 +161,29 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		packet := &ReplyData{}
 		network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
 		packet.Id = message.GetM3().Id
-		if val, ok := network.node.data[*NewKademliaID(message.GetM3().Key)]; ok {
+		if _, ok := network.node.data[*NewKademliaID(message.GetM3().Key)]; ok {
+			/*
 			fmt.Println("data found")
 			packet.ReturnType = "data"
 			reply := &Reply{message.GetM3().Key, val}
 			dataPacket := &ReplyData_ReplyData{reply}
 			packet.Msg = dataPacket
+			*/
 		} else {
-			packet.ReturnType = "contact"
-			closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetM3().Key), 20)
+			closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetM2().Target), 20)
+			network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
+
 			contactListReply := []*ReplyContact_Contact{}
 			for i := range closestContacts {
 				contactReply := &ReplyContact_Contact{closestContacts[i].ID.String(), closestContacts[i].Address, closestContacts[i].String()}
 				contactListReply = append(contactListReply, contactReply)
 			}
-			reply := &ReplyContact{message.GetM3().Key, contactListReply}
-			contactPacket := &ReplyData_ReplyContact{reply}
-			packet.Msg = contactPacket
+			packet := &ReplyContact{message.GetM2().GetId(), contactListReply}
+			wrapperMsg := &WrapperMessage_M5{packet}
+			wrapper := &WrapperMessage{"ReplyContact", network.node.rt.me.ID.String(), wrapperMsg}
+
+			network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 		}
-		wrapperMsg := &WrapperMessage_ReplyData{packet}
-		wrapper := &WrapperMessage{"ReplyData", network.node.rt.me.ID.String(), wrapperMsg}
-
-		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
-
 	} else if message.Id == "store" && replyErr == nil {
 		fmt.Println("Received store")
 		//store data (string) in data map
@@ -227,6 +196,17 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 
 	} else if message.Id == "Reply" && replyErr == nil {
 		fmt.Println("Got reply " + message.GetM4().Data)
+		requestID := NewKademliaID(message.GetM4().GetId())
+
+		network.mux.Lock()
+		answerChannel := network.waitingAnswerList[*requestID]
+		network.mux.Unlock()
+
+		if(answerChannel != nil) {
+			answerChannel<-message.GetM4().GetData()
+		} else {
+			fmt.Println("Forged Reply or Timeout")
+		}
 
 	} else if message.Id == "ReplyContact" && replyErr == nil {
 		requestID := NewKademliaID(message.GetM5().GetId())
@@ -236,12 +216,15 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		network.mux.Unlock()
 
 		if(answerChannel != nil) {
-			answerChannel <- message
+			contactList := []Contact{}
+			for i := range message.GetM5().GetContacts() {
+				contactList = append(contactList, NewContact(NewKademliaID(message.GetM5().Contacts[i].GetID()), message.GetM5().Contacts[i].GetAddress()))
+			}
+			answerChannel<-contactList
 		} else {
-			fmt.Println("Forged Reply")
+			fmt.Println("Forged Reply or Timeout")
 		}
-		close(answerChannel)
-
+		
 	} else if message.Id == "ReplyData" {
 		fmt.Println("received data reply")
 		requestID := NewKademliaID(message.GetReplyData().GetId())
@@ -268,7 +251,7 @@ func CheckError(err error) {
 		log.Fatal("Error: ", err)
 	}
 }
-
+/*
 func (network *Network) waitForAnswer(answerChannel chan *WrapperMessage) *WrapperMessage{
 	timeout := make(chan bool, 1)
 	go TimeoutWaiter(5, timeout)
@@ -281,19 +264,20 @@ func (network *Network) waitForAnswer(answerChannel chan *WrapperMessage) *Wrapp
 		}
 	}
 }
-
-func (network *Network) createChannel(messageID KademliaID) chan *WrapperMessage{
-	answerChannel := make(chan *WrapperMessage, 1)
+*/
+func (network *Network) createChannel(messageID *KademliaID, returnChannel chan interface{}) {
 	network.mux.Lock()
-	network.waitingAnswerList[messageID] = answerChannel
+	network.waitingAnswerList[*messageID] = returnChannel
 	network.mux.Unlock()
-	return answerChannel
 }
 
-func TimeoutWaiter(sleepTime int, sendChannel chan bool) {
+
+func (network *Network) TimeoutWaiter(sleepTime int, returnChannel chan interface{}, messageID *KademliaID) {
 	time.Sleep(time.Duration(sleepTime) * time.Second)
-	sendChannel <-true
-	close(sendChannel)
+	network.mux.Lock()
+	network.waitingAnswerList[*messageID] = nil
+	network.mux.Unlock()
+	returnChannel <-false
 }
 
 func (network *Network) marshalHelper(wrapper *WrapperMessage) []byte{
