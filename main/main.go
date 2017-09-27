@@ -18,12 +18,26 @@ func sendResponse(conn *net.UDPConn, addr *net.UDPAddr) {
 	}
 }
 
-func handleResponse(conn *net.UDPConn, addr *net.UDPAddr, p string){
-	_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
+func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, p string, network *Network){
+	//_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
 
-	if err != nil {
-		fmt.Printf("Couldn't send response %v", err)
+	if p[:5]=="Store" {
+		fmt.Println("this was a store message with arg "+ p[5:])
+		kademlia := NewKademlia(network)
+		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+		if len(p[5:]) >= 40{
+			kademlia.Store(NewKademliaID(p[5:45]), "data to store")
+			_,storeErr := conn.WriteToUDP([]byte("stored"+p), addr)
+			if storeErr != nil {
+				fmt.Println("something went shit in store %v", storeErr)
+			}
+		} else {
+			fmt.Println("You tried to add a new bad kademlia ID")
+		}
+	} else if p[:5]=="Cat" {
+		fmt.Println("I got a Cat call")
 	}
+
 }
 
 func startNetwork() {
@@ -101,7 +115,7 @@ func startNetwork() {
 			continue
 		}
 		//go sendResponse(ser, remoteaddr)
-		go handleResponse(ser, remoteaddr, string(p))
+		go handleRequest(ser, remoteaddr, string(p), lastNetwork)
 	}
 
 	/*for k1, v := range IDRTList {

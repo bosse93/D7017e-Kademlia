@@ -55,8 +55,7 @@ func main() {
         if c.NArg() > 0 {
           //store c.Args().First()
           fmt.Println("Sending server request")
-          //connect("Store", c.Args().First())
-			connect("Store", "")
+          connect("Store", c.Args().First())
         }
         return nil
       },
