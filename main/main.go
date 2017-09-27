@@ -8,10 +8,13 @@ import (
 	"time"
 	//"sort"
 	//"time"
+	"D7024e-Kademlia/github.com/urfave/cli"
+	"sort"
+	"os"
 )
 
 func main() {
-/*
+
 	app := cli.NewApp()
 
 	app.Flags = []cli.Flag {
@@ -43,6 +46,7 @@ func main() {
 			Action:  func(c *cli.Context) error {
 				if c.NArg() > 0 {
 					//store c.Args().First()
+					fmt.Println("stored stuff, lok joke I didn't.")
 
 				}
 				return nil
@@ -90,9 +94,9 @@ func main() {
 	sort.Sort(cli.CommandsByName(app.Commands))
 
 	app.Run(os.Args)
-*/
+
 	//FÖR AXEL
-	runTest()
+	//runTest()
 }
 
 

@@ -19,7 +19,7 @@ It has these top-level messages:
 */
 package main
 
-import proto "D7024e-Kademlia/github.com/protobuf/proto"
+import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 
