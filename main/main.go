@@ -3,135 +3,30 @@ package main
 import (
 	"fmt"
 	"strconv"
-	//"os"
-	"D7024e-Kademlia/github.com/urfave/cli"
 	"time"
-	"sort"
-	//"time"
-	//"D7024e-Kademlia/github.com/urfave/cli"
-	//"sort"
-	"os"
-	"bufio"
-	//"strings"
+	"net"
 )
 
 func main() {
-
-	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
-	firstNodeRT := NewRoutingTable(firstNode)
-	NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
-
-	app := cli.NewApp()
-
-	app.Flags = []cli.Flag {
-		cli.StringFlag{
-			Name: "lang, l",
-			Value: "english",
-			Usage: "Language for the greeting",
-		},
-		cli.StringFlag{
-			Name: "config, c",
-			Usage: "Load configuration from `FILE`",
-		},
-	}
-
-	app.Commands = []cli.Command{
-		{
-			Name:    "run",
-			Aliases: []string{"r"},
-			Usage:   "runs runTest()",
-			Action:  func(c *cli.Context) error {
-				ID := NewRandomKademliaID()
-				a := "localhost:" + strconv.Itoa(8001)
-				rt := NewRoutingTable(NewContact(ID, a))
-				rt.AddContact(firstNodeRT.me)
-				NewNetwork(NewNode(rt), "localhost", 8001)
-				for{
-					scanner := bufio.NewScanner(os.Stdin)
-					for scanner.Scan() {
-    					fmt.Println(scanner.Text())
-    					if(scanner.Text() == "finddata") {
-    						fmt.Println("FindData")
-    						break
-    					}
-					}
-
-				}
-
-				runTest()
-				return nil
-			},
-		},
-		{
-			Name:    "store",
-			Aliases: []string{"s"},
-			Usage:   "Store arg0",
-			Action:  func(c *cli.Context) error {
-				if c.NArg() > 0 {
-					//store c.Args().First()
-					fmt.Println("stored stuff, lok joke I didn't.")
-
-				}
-				return nil
-			},
-		},
-		{
-			Name:    "cat",
-			Aliases: []string{"c"},
-			Usage:   "Prints content of arg0",
-			Action:  func(c *cli.Context) error {
-				if c.NArg() > 0 {
-					//cat c.Args().First()
-
-				}
-				return nil
-			},
-		},
-		{
-			Name:    "pin",
-			Aliases: []string{"p"},
-			Usage:   "Pins arg0",
-			Action:  func(c *cli.Context) error {
-				if c.NArg() > 0 {
-					//pin c.Args().First()
-
-				}
-				return nil
-			},
-		},
-		{
-			Name:    "unpin",
-			Aliases: []string{"u"},
-			Usage:   "Unpins arg0",
-			Action:  func(c *cli.Context) error {
-				if c.NArg() > 0 {
-					//unpin c.Args().First()
-
-				}
-				return nil
-			},
-		},
-	}
-
-	sort.Sort(cli.FlagsByName(app.Flags))
-	sort.Sort(cli.CommandsByName(app.Commands))
-
-	app.Run(os.Args)
-
-	//FÖR AXEL
-	//runTest()
+	startNetwork()
 }
 
+func sendResponse(conn *net.UDPConn, addr *net.UDPAddr) {
+	_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage "), addr)
+	if err != nil {
+		fmt.Printf("Couldn't send response %v", err)
+	}
+}
 
+func handleResponse(conn *net.UDPConn, addr *net.UDPAddr, p string){
+	_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
 
-/*func start() {
-	node := NewContact(NewRandomKademliaID(), "localhost:8000")
-	routingTable := NewRoutingTable(node)
-	network := NewNetwork(NewNode(routingTable), "localhost", 8000)
+	if err != nil {
+		fmt.Printf("Couldn't send response %v", err)
+	}
+}
 
-}*/
-
-func runTest() {
+func startNetwork() {
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 	lastNetwork := NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
@@ -139,7 +34,7 @@ func runTest() {
 	nodeList := []*RoutingTable{firstNodeRT}
 	//lastNode := firstNode
 	//create 100 nodes
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		port := 8001 + i
 		a := "localhost:" + strconv.Itoa(port)
 
@@ -177,7 +72,38 @@ func runTest() {
 	} else {
 		fmt.Println("Data not found")
 	}
-	
+
+
+
+	//TEST
+	p := make([]byte, 2048)
+	addr := net.UDPAddr{
+		Port: 1234,
+		IP: net.ParseIP("127.0.0.1"),
+	}
+	ser, err := net.ListenUDP("udp", &addr)
+	if err != nil {
+		fmt.Printf("Some error %v\n", err)
+		return
+	}
+	for {
+		_,remoteaddr,err := ser.ReadFromUDP(p)
+		fmt.Printf("Read a message from %v %s \n", remoteaddr, p)
+		fmt.Println(p)
+		fmt.Println(string(p))
+		if string(p) =="Cat"{
+			fmt.Println("I got cat back do cat stuff")
+		} else if string(p) == "Store" {
+			fmt.Println("I got Store back")
+		}
+		if err !=  nil {
+			fmt.Printf("Some error  %v", err)
+			continue
+		}
+		//go sendResponse(ser, remoteaddr)
+		go handleResponse(ser, remoteaddr, string(p))
+	}
+
 	/*for k1, v := range IDRTList {
 		for k2, v2 := range v.node.data {
 			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
