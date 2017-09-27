@@ -5,17 +5,19 @@ import (
 	"strconv"
 	"time"
 	"net"
+	"encoding/hex"
 )
 
 func main() {
 	startNetwork()
 }
 
-func sendResponse(conn *net.UDPConn, addr *net.UDPAddr) {
-	_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage "), addr)
-	if err != nil {
-		fmt.Printf("Couldn't send response %v", err)
+func hashKademliaID(fileName string) *KademliaID{
+	f := hex.EncodeToString([]byte(fileName))
+	for len(f) < 40 {
+		f = f + "0"
 	}
+	return NewKademliaID(f)
 }
 
 func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, p string, network *Network){
@@ -25,14 +27,15 @@ func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, p string, network *Netw
 		fmt.Println("this was a store message with arg "+ p[5:])
 		kademlia := NewKademlia(network)
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-		if len(p[5:]) >= 40{
-			kademlia.Store(NewKademliaID(p[5:45]), "data to store")
-			_,storeErr := conn.WriteToUDP([]byte("stored"+p), addr)
+		if len(p[5:]) <= 40{
+			newKad := hashKademliaID(p[5:])
+			kademlia.Store(newKad, "data to store")
+			_,storeErr := conn.WriteToUDP([]byte("stored: "+newKad.String()), addr)
 			if storeErr != nil {
-				fmt.Println("something went shit in store %v", storeErr)
+				fmt.Println("something went shit in store: %v", storeErr)
 			}
 		} else {
-			fmt.Println("You tried to add a new bad kademlia ID")
+			fmt.Println("You tried to add a new file above 40 characters")
 		}
 	} else if p[:5]=="Cat" {
 		fmt.Println("I got a Cat call")
@@ -89,7 +92,7 @@ func startNetwork() {
 
 
 
-	//TEST
+	//FRONTEND
 	p := make([]byte, 2048)
 	addr := net.UDPAddr{
 		Port: 1234,
