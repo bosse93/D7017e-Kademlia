@@ -39,10 +39,7 @@ message ReplyContact {
 
 message ReplyData {
     string id = 1;
-    string returnType = 2;
-    oneof msg {
-        Reply replyData = 3;
-        ReplyContact replyContact = 4;
+    string data = 2;
     }
 }
 

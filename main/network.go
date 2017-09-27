@@ -158,10 +158,9 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 
 	} else if message.Id == "RequestData" && replyErr == nil {
-		packet := &ReplyData{}
-		network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
-		packet.Id = message.GetM3().Id
-		if _, ok := network.node.data[*NewKademliaID(message.GetM3().Key)]; ok {
+		if data, ok := network.node.data[*NewKademliaID(message.GetM3().Key)]; ok {
+			network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
+
 			/*
 			fmt.Println("data found")
 			packet.ReturnType = "data"
@@ -169,6 +168,11 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 			dataPacket := &ReplyData_ReplyData{reply}
 			packet.Msg = dataPacket
 			*/
+			packet := &ReplyData{message.GetM3().GetId(), data}
+			wrapperMsg := &WrapperMessage_ReplyData{packet}
+			wrapper := &WrapperMessage{"ReplyData", network.node.rt.me.ID.String(), wrapperMsg}
+
+			network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 		} else {
 			closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetM2().Target), 20)
 			network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
@@ -234,11 +238,10 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		network.mux.Unlock()
 
 		if answerChannel != nil {
-			answerChannel <- message
+			answerChannel <- message.GetReplyData().GetData()
 		} else {
 			fmt.Println("Forged Reply")
 		}
-		close(answerChannel)
 	} else {
 		fmt.Println(message.Id)
 		log.Println("Something went wrong in Listen, err: ", replyErr)
