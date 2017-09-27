@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	//"strconv"
 	"fmt"
-	//"strconv"
+	"strconv"
 )
 
 type Kademlia struct {
@@ -361,13 +361,13 @@ func (kademlia *Kademlia) LookupData(hash string) (returnData string, success bo
 
 func (kademlia *Kademlia) Store(key *KademliaID, data string) {
 	contacts, _ := kademlia.LookupContact(key, false)
-	returnChannel := make(chan interface{})
 	for i := 0 ; i < len(contacts); i++ {
+		returnChannel := make(chan interface{})
 		go kademlia.network.SendStoreMessage(key.String(), data, contacts[i].Address, returnChannel)
 		returnValue:= <-returnChannel
 		switch returnValue := returnValue.(type) {
 			case string:
-				fmt.Println("Store " + strconv.itoa(i) + " Reply: " + returnValue)
+				fmt.Println("Store " + strconv.Itoa(i) + " Reply: " + returnValue)
 			default:
 				fmt.Println("Something went wrong")
 		}

@@ -189,7 +189,7 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		//store data (string) in data map
 		network.node.Store(*NewKademliaID(message.GetM5().Contacts[0].ID), message.GetM5().Contacts[0].Address)
 		//send reply
-		packet := &Reply{message.SourceID, "ok"}
+		packet := &Reply{message.GetM5().GetId(), "ok"}
 		wrapperMsg := &WrapperMessage_M4{packet}
 		wrapper := &WrapperMessage{"Reply", network.node.rt.me.ID.String(), wrapperMsg}
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)

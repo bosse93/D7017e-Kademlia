@@ -143,12 +143,14 @@ func runTest() {
 	kademlia := NewKademlia(lastNetwork)
 	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store")
 	time.Sleep(3*time.Second)
+	/*
 	data, success := kademlia.LookupData("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
 	if(success) {
 		fmt.Println("Data returned " + data)
 	} else {
 		fmt.Println("Data not found")
 	}
+	*/
 	/*for k1, v := range IDRTList {
 		for k2, v2 := range v.node.data {
 			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
