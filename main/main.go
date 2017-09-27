@@ -4,17 +4,23 @@ import (
 	"fmt"
 	"strconv"
 	//"os"
-	//"D7024e-Kademlia/github.com/urfave/cli"
+	"D7024e-Kademlia/github.com/urfave/cli"
 	"time"
-	//"sort"
+	"sort"
 	//"time"
 	//"D7024e-Kademlia/github.com/urfave/cli"
 	//"sort"
-	//"os"
+	"os"
+	"bufio"
+	//"strings"
 )
 
 func main() {
-/*
+
+	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
+	firstNodeRT := NewRoutingTable(firstNode)
+	NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
+
 	app := cli.NewApp()
 
 	app.Flags = []cli.Flag {
@@ -35,6 +41,23 @@ func main() {
 			Aliases: []string{"r"},
 			Usage:   "runs runTest()",
 			Action:  func(c *cli.Context) error {
+				ID := NewRandomKademliaID()
+				a := "localhost:" + strconv.Itoa(8001)
+				rt := NewRoutingTable(NewContact(ID, a))
+				rt.AddContact(firstNodeRT.me)
+				NewNetwork(NewNode(rt), "localhost", 8001)
+				for{
+					scanner := bufio.NewScanner(os.Stdin)
+					for scanner.Scan() {
+    					fmt.Println(scanner.Text())
+    					if(scanner.Text() == "finddata") {
+    						fmt.Println("FindData")
+    						break
+    					}
+					}
+
+				}
+
 				runTest()
 				return nil
 			},
@@ -94,9 +117,9 @@ func main() {
 	sort.Sort(cli.CommandsByName(app.Commands))
 
 	app.Run(os.Args)
-*/
+
 	//FÖR AXEL
-	runTest()
+	//runTest()
 }
 
 
