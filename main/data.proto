@@ -40,7 +40,6 @@ message ReplyContact {
 message ReplyData {
     string id = 1;
     string data = 2;
-    }
 }
 
 message WrapperMessage {
