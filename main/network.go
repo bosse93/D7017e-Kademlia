@@ -158,6 +158,7 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 		network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 
 	} else if message.Id == "RequestData" && replyErr == nil {
+		fmt.Println("RequestData")
 		if data, ok := network.node.data[*NewKademliaID(message.GetM3().Key)]; ok {
 			network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
 
@@ -174,7 +175,7 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 
 			network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 		} else {
-			closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetM2().Target), 20)
+			closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetM3().GetKey()), 20)
 			network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
 
 			contactListReply := []*ReplyContact_Contact{}
@@ -182,7 +183,7 @@ func (network *Network) handleRequest(message *WrapperMessage, replyErr error, s
 				contactReply := &ReplyContact_Contact{closestContacts[i].ID.String(), closestContacts[i].Address, closestContacts[i].String()}
 				contactListReply = append(contactListReply, contactReply)
 			}
-			packet := &ReplyContact{message.GetM2().GetId(), contactListReply}
+			packet := &ReplyContact{message.GetM3().GetId(), contactListReply}
 			wrapperMsg := &WrapperMessage_M5{packet}
 			wrapper := &WrapperMessage{"ReplyContact", network.node.rt.me.ID.String(), wrapperMsg}
 

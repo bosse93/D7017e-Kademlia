@@ -8,13 +8,13 @@ import (
 	"time"
 	//"sort"
 	//"time"
-	"D7024e-Kademlia/github.com/urfave/cli"
-	"sort"
-	"os"
+	//"D7024e-Kademlia/github.com/urfave/cli"
+	//"sort"
+	//"os"
 )
 
 func main() {
-
+/*
 	app := cli.NewApp()
 
 	app.Flags = []cli.Flag {
@@ -94,9 +94,9 @@ func main() {
 	sort.Sort(cli.CommandsByName(app.Commands))
 
 	app.Run(os.Args)
-
+*/
 	//FÖR AXEL
-	//runTest()
+	runTest()
 }
 
 
@@ -147,14 +147,14 @@ func runTest() {
 	kademlia := NewKademlia(lastNetwork)
 	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store")
 	time.Sleep(3*time.Second)
-	/*
+	kademlia = NewKademlia(lastNetwork)
 	data, success := kademlia.LookupData("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
 	if(success) {
 		fmt.Println("Data returned " + data)
 	} else {
 		fmt.Println("Data not found")
 	}
-	*/
+	
 	/*for k1, v := range IDRTList {
 		for k2, v2 := range v.node.data {
 			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
