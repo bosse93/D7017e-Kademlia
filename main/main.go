@@ -6,6 +6,7 @@ import (
 	"time"
 	"net"
 	"encoding/hex"
+	"io/ioutil"
 )
 
 func main() {
@@ -51,7 +52,7 @@ func startNetwork() {
 	nodeList := []*RoutingTable{firstNodeRT}
 	//lastNode := firstNode
 	//create 100 nodes
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		port := 8001 + i
 		a := "localhost:" + strconv.Itoa(port)
 
@@ -72,18 +73,23 @@ func startNetwork() {
 				rt.AddContact(contactResult[q])
 			}
 		}
-		//lastNetwork = nw
+		lastNetwork = nw
 	}
 
 	printFirstNodeRT(firstNode, firstNodeRT)
 	printLastNodeRT(nodeList)
 
+	testStore := hashKademliaID("testStore.txt")
+	fmt.Println("test store " + testStore.String())
+
+	dat, err := ioutil.ReadFile("main/testStore.txt")
+	check(err)
 
 	kademlia := NewKademlia(lastNetwork)
-	kademlia.Store(NewKademliaID("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), "data to store")
+	kademlia.Store(testStore, string(dat))
 	time.Sleep(3*time.Second)
 	kademlia = NewKademlia(lastNetwork)
-	data, success := kademlia.LookupData("FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")
+	data, success := kademlia.LookupData(testStore.String())
 	if(success) {
 		fmt.Println("Data returned " + data)
 	} else {
@@ -168,4 +174,10 @@ func printAllNodesRT(nodeList []*RoutingTable) {
 	}
 
 
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
 }
