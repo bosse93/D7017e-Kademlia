@@ -31,3 +31,4 @@ func TestBucket(t *testing.T) {
 	burk := newBucket()
 	burk.Len()
 }
+

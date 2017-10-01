@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	startNetwork()
+	StartNetwork()
 }
 
-func hashKademliaID(fileName string) *KademliaID{
+func HashKademliaID(fileName string) *KademliaID{
 	f := hex.EncodeToString([]byte(fileName))
 	for len(f) < 40 {
 		f = f + "0"
@@ -21,30 +21,28 @@ func hashKademliaID(fileName string) *KademliaID{
 	return NewKademliaID(f)
 }
 
-func handleRequest(conn *net.UDPConn, addr *net.UDPAddr, p string, network *Network){
+func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, p string, network *Network){
 	//_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
 
 	if p[:5]=="Store" {
 		fmt.Println("this was a store message with arg "+ p[5:])
 		kademlia := NewKademlia(network)
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-		if len(p[5:]) <= 40{
-			newKad := hashKademliaID(p[5:])
-			kademlia.Store(newKad, "data to store")
-			_,storeErr := conn.WriteToUDP([]byte("stored: "+newKad.String()), addr)
-			if storeErr != nil {
-				fmt.Println("something went shit in store: %v", storeErr)
-			}
-		} else {
-			fmt.Println("You tried to add a new file above 40 characters")
+
+		newKad := HashKademliaID(p[5:])
+		kademlia.Store(newKad, "data to store")
+		_,storeErr := conn.WriteToUDP([]byte("stored: "+newKad.String()), addr)
+		if storeErr != nil {
+			fmt.Println("something went shit in store: %v", storeErr)
 		}
-	} else if p[:5]=="Cat" {
+
+	} else if p[:3]=="Cat" {
 		fmt.Println("I got a Cat call")
 	}
 
 }
 
-func startNetwork() {
+func CreateNodes(amount int) *Network{
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 	lastNetwork := NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
@@ -52,7 +50,7 @@ func startNetwork() {
 	nodeList := []*RoutingTable{firstNodeRT}
 	//lastNode := firstNode
 	//create 100 nodes
-	for i := 0; i < 100; i++ {
+	for i := 0; i < amount; i++ {
 		port := 8001 + i
 		a := "localhost:" + strconv.Itoa(port)
 
@@ -74,31 +72,12 @@ func startNetwork() {
 			}
 		}
 		lastNetwork = nw
+
 	}
+	return lastNetwork
+}
 
-	printFirstNodeRT(firstNode, firstNodeRT)
-	printLastNodeRT(nodeList)
-
-	testStore := hashKademliaID("testStore.txt")
-	fmt.Println("test store " + testStore.String())
-
-	dat, err := ioutil.ReadFile("main/testStore.txt")
-	check(err)
-
-	kademlia := NewKademlia(lastNetwork)
-	kademlia.Store(testStore, string(dat))
-	time.Sleep(3*time.Second)
-	kademlia = NewKademlia(lastNetwork)
-	data, success := kademlia.LookupData(testStore.String())
-	if(success) {
-		fmt.Println("Data returned " + data)
-	} else {
-		fmt.Println("Data not found")
-	}
-
-
-
-	//FRONTEND
+func StartFrontend(lastNetwork *Network){
 	p := make([]byte, 2048)
 	addr := net.UDPAddr{
 		Port: 1234,
@@ -124,8 +103,38 @@ func startNetwork() {
 			continue
 		}
 		//go sendResponse(ser, remoteaddr)
-		go handleRequest(ser, remoteaddr, string(p), lastNetwork)
+		go HandleRequest(ser, remoteaddr, string(p), lastNetwork)
+
 	}
+}
+
+func StartNetwork() {
+	//Creates x amount of nodes in a network
+	lastNetwork := CreateNodes(10)
+
+	//printFirstNodeRT(firstNode, firstNodeRT)
+	//printLastNodeRT(nodeList)
+
+	testStore := HashKademliaID("testStore.txt")
+	fmt.Println("test store " + testStore.String())
+
+	dat, err := ioutil.ReadFile("main/testStore.txt")
+	check(err)
+
+	kademlia := NewKademlia(lastNetwork)
+	kademlia.Store(testStore, string(dat))
+	time.Sleep(3*time.Second)
+	kademlia = NewKademlia(lastNetwork)
+	data, success := kademlia.LookupData(testStore.String())
+	if(success) {
+		fmt.Println("Data returned " + data)
+	} else {
+		fmt.Println("Data not found")
+	}
+
+	//Setup Frontend
+	StartFrontend(lastNetwork)
+
 
 	/*for k1, v := range IDRTList {
 		for k2, v2 := range v.node.data {
