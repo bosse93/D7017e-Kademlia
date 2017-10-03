@@ -50,8 +50,8 @@ message WrapperMessage {
         RequestContact requestContact = 5;
         RequestData requestData = 6;
         RequestStore requestStore = 7;
-        Reply replyPing = 8;
-        ReplyContact replyContact = 9;
+        ReplyPing replyPing = 8;
+        ReplyContactList replyContactList = 9;
         ReplyData replyData = 10;
         ReplyStore replyStore = 11;
     }
