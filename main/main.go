@@ -7,6 +7,7 @@ import (
 	"net"
 	"encoding/hex"
 	"io/ioutil"
+	"os"
 )
 
 func main() {
@@ -118,7 +119,8 @@ func StartNetwork() {
 	testStore := HashKademliaID("testStore.txt")
 	fmt.Println("test store " + testStore.String())
 
-	dat, err := ioutil.ReadFile("main/testStore.txt")
+	pwd, _ := os.Getwd()
+	dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/main/testStore.txt")
 	check(err)
 
 	kademlia := NewKademlia(lastNetwork)

@@ -16,6 +16,7 @@ type Kademlia struct {
 	network Network
 	numberOfIdenticalAnswersInRow int
 	threadCount int
+	k int
 }
 
 func NewKademlia(nw *Network) *Kademlia {
@@ -25,6 +26,7 @@ func NewKademlia(nw *Network) *Kademlia {
 	kademlia.rt = kademlia.network.node.rt
 	kademlia.numberOfIdenticalAnswersInRow = 0
 	kademlia.threadCount = 0
+	kademlia.k = 3
 	rand.Seed(time.Now().UnixNano())
 	return kademlia
 }
@@ -90,7 +92,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 
 	returnChannel := make(chan interface{}, 3)
 	
-	for i := 0; i < 3 && i < len(kademlia.closest.contacts); i++ {
+	for i := 0; i < 3 && i < len(kademlia.closest.contacts) && kademlia.threadCount < kademlia.k; i++ {
 		if findData {
 			fmt.Println("New Thread")
 			kademlia.threadCount++
@@ -143,7 +145,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 					returnContact = kademlia.closest.contacts
 					return
 				}
-				if(kademlia.threadCount < 3) {
+				if(kademlia.threadCount < kademlia.k) {
 					destination, success := kademlia.findNextNodeToAsk()
 					if(success) {
 						fmt.Println("New Thread")
