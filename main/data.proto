@@ -1,33 +1,24 @@
 syntax = "proto3";
 package main;
 
-message RequestPing {
-  string Id = 1;
-  }
-
 message RequestContact {
-  string Id = 1;
-  string target = 2;
+  string target = 1;
 }
 
 message RequestData {
-  string Id = 1;
-  string Key = 2;
+  string Key = 1;
 }
 
 message RequestStore {
-    string Id = 1;
-    string Key = 2;
-    string Data = 3;
+    string Key = 1;
+    string Data = 2;
 }
 
 message Reply {
-  string Id = 1;
-  string data = 2;
+  string data = 1;
 }
 
 message ReplyContact {
-  string id = 1;
   message Contact {
     string ID = 1;
     string Address = 2;
@@ -38,19 +29,18 @@ message ReplyContact {
 }
 
 message ReplyData {
-    string id = 1;
     string data = 2;
 }
 
 message WrapperMessage {
     string id = 1;
     string sourceID = 2;
+    string requestID = 3;
     oneof msg {
-        RequestPing m1 = 3;
-        RequestContact m2 = 4;
-        RequestData m3 = 5;
-        Reply m4 = 6;
-        ReplyContact m5 = 7;
+        RequestContact requestContact = 4;
+        RequestData requestData = 5;
+        Reply reply = 6;
+        ReplyContact replyContact = 7;
         ReplyData replyData = 8;
     }
 }
