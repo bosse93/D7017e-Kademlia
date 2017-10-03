@@ -18,10 +18,8 @@ message RequestStore {
 }
 
 message ReplyPing {
-  message Contact {
-    string ID = 1;
-    string Address = 2;
-  }
+   string ID = 1;
+   string Address = 2;
 }
 
 message ReplyContactList {
