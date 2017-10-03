@@ -165,34 +165,23 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 		return
 	}
 
+	var wrapper *WrapperMessage 
+
 	switch message.ID {
 		case "RequestPing":
 			packet := &ReplyPing{network.node.rt.me.ID.String(), network.node.rt.me.Address}
 			wrapperMsg := &WrapperMessage_ReplyPing{packet}
-			wrapper := &WrapperMessage{"ReplyPing", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
-
-			network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
+			wrapper = &WrapperMessage{"ReplyPing", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 
 		case "RequestContact":
-			closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetRequestContact().GetTarget()), 20)
-			network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
+			contactListReply := network.getClosestContacts(message.GetRequestContact().GetTarget())
 
-			contactListReply := []*ReplyContactList_Contact{}
-			for i := range closestContacts {
-				contactReply := &ReplyContactList_Contact{closestContacts[i].ID.String(), closestContacts[i].Address}
-				contactListReply = append(contactListReply, contactReply)
-			}
 			packet := &ReplyContactList{contactListReply}
 			wrapperMsg := &WrapperMessage_ReplyContactList{packet}
-			wrapper := &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
-
-			network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
+			wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}			
 
 		case "RequestData":
-			fmt.Println("RequestData")
 			if data, ok := network.node.data[*NewKademliaID(message.GetRequestData().Key)]; ok {
-				network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
-
 				/*
 				fmt.Println("data found")
 				packet.ReturnType = "data"
@@ -202,43 +191,47 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 				*/
 				packet := &ReplyData{data}
 				wrapperMsg := &WrapperMessage_ReplyData{packet}
-				wrapper := &WrapperMessage{"ReplyData", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
+				wrapper = &WrapperMessage{"ReplyData", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 
-				network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 			} else {
-				closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(message.GetRequestData().GetKey()), 20)
-				network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
+				contactListReply := network.getClosestContacts(message.GetRequestData().GetKey())
 
-				contactListReply := []*ReplyContactList_Contact{}
-				for i := range closestContacts {
-					contactReply := &ReplyContactList_Contact{closestContacts[i].ID.String(), closestContacts[i].Address}
-					contactListReply = append(contactListReply, contactReply)
-				}
 				packet := &ReplyContactList{contactListReply}
 				wrapperMsg := &WrapperMessage_ReplyContactList{packet}
-				wrapper := &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
-
-				network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
+				wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 			}
 
 		case "RequestStore":
 			network.node.Store(*NewKademliaID(message.GetRequestStore().GetKey()), message.GetRequestStore().GetData())
+
 			packet := &ReplyStore{"ok"}
 			wrapperMsg := &WrapperMessage_ReplyStore{packet}
-			wrapper := &WrapperMessage{"ReplyStore", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
-			network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
+			wrapper = &WrapperMessage{"ReplyStore", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 
 		default:
 			fmt.Println("Not a valid Request ID. ID: " + message.ID)
 			return
 
 	}
+
+	network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
+	network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 }
 
 func CheckError(err error) {
 	if err != nil {
 		log.Fatal("Error: ", err)
 	}
+}
+
+func (network *Network) getClosestContacts(target string) (contactListReply []*ReplyContactList_Contact) {
+	closestContacts := network.node.rt.FindClosestContacts(NewKademliaID(target), 20)
+	contactListReply = []*ReplyContactList_Contact{}
+	for i := range closestContacts {
+		contactReply := &ReplyContactList_Contact{closestContacts[i].ID.String(), closestContacts[i].Address}
+		contactListReply = append(contactListReply, contactReply)
+	}
+	return contactListReply
 }
 
 func (network *Network) createChannel(messageID *KademliaID, returnChannel chan interface{}) {
