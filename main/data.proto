@@ -1,8 +1,11 @@
 syntax = "proto3";
 package main;
 
+message RequestPing {
+}
+
 message RequestContact {
-  string target = 1;
+  string Target = 1;
 }
 
 message RequestData {
@@ -14,33 +17,44 @@ message RequestStore {
     string Data = 2;
 }
 
-message Reply {
-  string data = 1;
+message ReplyPing {
+  message Contact {
+    string ID = 1;
+    string Address = 2;
+    string Distance = 3;
+  }
 }
 
-message ReplyContact {
+message ReplyContactList {
   message Contact {
     string ID = 1;
     string Address = 2;
     string Distance = 3;
   }
 
-  repeated Contact Contacts = 2;
+  repeated Contact Contacts = 1;
 }
 
 message ReplyData {
-    string data = 2;
+    string Data = 1;
+}
+
+message ReplyStore {
+	string Data = 1;
 }
 
 message WrapperMessage {
-    string id = 1;
-    string sourceID = 2;
-    string requestID = 3;
+    string ID = 1;
+    string SourceID = 2;
+    string RequestID = 3;
     oneof msg {
-        RequestContact requestContact = 4;
-        RequestData requestData = 5;
-        Reply reply = 6;
-        ReplyContact replyContact = 7;
-        ReplyData replyData = 8;
+    	RequestPing requestPing = 4;
+        RequestContact requestContact = 5;
+        RequestData requestData = 6;
+        RequestStore requestStore = 7;
+        Reply replyPing = 8;
+        ReplyContact replyContact = 9;
+        ReplyData replyData = 10;
+        ReplyStore replyStore = 11;
     }
 }
