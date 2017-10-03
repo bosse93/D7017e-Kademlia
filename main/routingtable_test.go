@@ -27,7 +27,7 @@ func TestRoutingTable(t *testing.T) {
 
 }
 
-func TestBucket(t *testing.T) {
+func TestBucket_Len(t *testing.T) {
 	burk := newBucket()
 	burk.Len()
 }

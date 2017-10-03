@@ -43,7 +43,7 @@ func (kademlia *Kademlia) findNextNodeToAsk() (nextContact *Contact, success boo
 	return
 }
 
-func (kademlia *Kademlia) askNextNode(target *KademliaID, destination *Contact, findData bool, returnChannel chan interface{}) {
+func (kademlia *Kademlia) AskNextNode(target *KademliaID, destination *Contact, findData bool, returnChannel chan interface{}) {
 		if(findData) {
 			go kademlia.network.SendFindDataMessage(target.String(), destination, returnChannel)
 		} else {
@@ -115,7 +115,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 						}
 						destination, success := kademlia.findNextNodeToAsk()
 						if(success) {
-							kademlia.askNextNode(target, destination, findData, returnChannel)
+							kademlia.AskNextNode(target, destination, findData, returnChannel)
 						} else {
 							fmt.Println("Thread Killed")
 							kademlia.threadCount--
@@ -130,7 +130,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 						fmt.Println("Timeout")
 						destination, success := kademlia.findNextNodeToAsk()
 						if(success) {
-							kademlia.askNextNode(target, destination, findData, returnChannel)
+							kademlia.AskNextNode(target, destination, findData, returnChannel)
 						} else {
 							fmt.Println("Thread Killed")
 							kademlia.threadCount--
@@ -148,7 +148,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 					if(success) {
 						fmt.Println("New Thread")
 						kademlia.threadCount++
-						kademlia.askNextNode(target, destination, findData, returnChannel)
+						kademlia.AskNextNode(target, destination, findData, returnChannel)
 					} 
 				}			
 		}

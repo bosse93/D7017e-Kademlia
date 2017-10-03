@@ -83,7 +83,9 @@ func TestStartNetwork(t *testing.T) {
 
 }
 
-func TestBucket_Len(t *testing.T) {
-	a := newBucket()
-	a.Len()
+
+//Needs network of nodes to test this - cant do it in kademlia test without rewriting createNodes
+func TestNewKademlia(t *testing.T) {
+	x := NewKademlia(network)
+	x = x
 }

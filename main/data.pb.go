@@ -8,7 +8,6 @@ It is generated from these files:
 	data.proto
 
 It has these top-level messages:
-	RequestPing
 	RequestContact
 	RequestData
 	RequestStore
@@ -19,7 +18,7 @@ It has these top-level messages:
 */
 package main
 
-import proto "D7024e-Kademlia/github.com/protobuf/proto"
+import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 
@@ -34,38 +33,14 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type RequestPing struct {
-	Id string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
-}
-
-func (m *RequestPing) Reset()                    { *m = RequestPing{} }
-func (m *RequestPing) String() string            { return proto.CompactTextString(m) }
-func (*RequestPing) ProtoMessage()               {}
-func (*RequestPing) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
-
-func (m *RequestPing) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
 type RequestContact struct {
-	Id     string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
-	Target string `protobuf:"bytes,2,opt,name=target" json:"target,omitempty"`
+	Target string `protobuf:"bytes,1,opt,name=target" json:"target,omitempty"`
 }
 
 func (m *RequestContact) Reset()                    { *m = RequestContact{} }
 func (m *RequestContact) String() string            { return proto.CompactTextString(m) }
 func (*RequestContact) ProtoMessage()               {}
-func (*RequestContact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *RequestContact) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
+func (*RequestContact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
 func (m *RequestContact) GetTarget() string {
 	if m != nil {
@@ -75,21 +50,13 @@ func (m *RequestContact) GetTarget() string {
 }
 
 type RequestData struct {
-	Id  string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
-	Key string `protobuf:"bytes,2,opt,name=Key" json:"Key,omitempty"`
+	Key string `protobuf:"bytes,1,opt,name=Key" json:"Key,omitempty"`
 }
 
 func (m *RequestData) Reset()                    { *m = RequestData{} }
 func (m *RequestData) String() string            { return proto.CompactTextString(m) }
 func (*RequestData) ProtoMessage()               {}
-func (*RequestData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *RequestData) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
+func (*RequestData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
 func (m *RequestData) GetKey() string {
 	if m != nil {
@@ -99,22 +66,14 @@ func (m *RequestData) GetKey() string {
 }
 
 type RequestStore struct {
-	Id   string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
-	Key  string `protobuf:"bytes,2,opt,name=Key" json:"Key,omitempty"`
-	Data string `protobuf:"bytes,3,opt,name=Data" json:"Data,omitempty"`
+	Key  string `protobuf:"bytes,1,opt,name=Key" json:"Key,omitempty"`
+	Data string `protobuf:"bytes,2,opt,name=Data" json:"Data,omitempty"`
 }
 
 func (m *RequestStore) Reset()                    { *m = RequestStore{} }
 func (m *RequestStore) String() string            { return proto.CompactTextString(m) }
 func (*RequestStore) ProtoMessage()               {}
-func (*RequestStore) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *RequestStore) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
+func (*RequestStore) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func (m *RequestStore) GetKey() string {
 	if m != nil {
@@ -131,21 +90,13 @@ func (m *RequestStore) GetData() string {
 }
 
 type Reply struct {
-	Id   string `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
-	Data string `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
+	Data string `protobuf:"bytes,1,opt,name=data" json:"data,omitempty"`
 }
 
 func (m *Reply) Reset()                    { *m = Reply{} }
 func (m *Reply) String() string            { return proto.CompactTextString(m) }
 func (*Reply) ProtoMessage()               {}
-func (*Reply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-func (m *Reply) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
+func (*Reply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *Reply) GetData() string {
 	if m != nil {
@@ -155,21 +106,13 @@ func (m *Reply) GetData() string {
 }
 
 type ReplyContact struct {
-	Id       string                  `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 	Contacts []*ReplyContact_Contact `protobuf:"bytes,2,rep,name=Contacts" json:"Contacts,omitempty"`
 }
 
 func (m *ReplyContact) Reset()                    { *m = ReplyContact{} }
 func (m *ReplyContact) String() string            { return proto.CompactTextString(m) }
 func (*ReplyContact) ProtoMessage()               {}
-func (*ReplyContact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *ReplyContact) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
+func (*ReplyContact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *ReplyContact) GetContacts() []*ReplyContact_Contact {
 	if m != nil {
@@ -187,7 +130,7 @@ type ReplyContact_Contact struct {
 func (m *ReplyContact_Contact) Reset()                    { *m = ReplyContact_Contact{} }
 func (m *ReplyContact_Contact) String() string            { return proto.CompactTextString(m) }
 func (*ReplyContact_Contact) ProtoMessage()               {}
-func (*ReplyContact_Contact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5, 0} }
+func (*ReplyContact_Contact) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4, 0} }
 
 func (m *ReplyContact_Contact) GetID() string {
 	if m != nil {
@@ -211,21 +154,13 @@ func (m *ReplyContact_Contact) GetDistance() string {
 }
 
 type ReplyData struct {
-	Id   string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 	Data string `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
 }
 
 func (m *ReplyData) Reset()                    { *m = ReplyData{} }
 func (m *ReplyData) String() string            { return proto.CompactTextString(m) }
 func (*ReplyData) ProtoMessage()               {}
-func (*ReplyData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
-
-func (m *ReplyData) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
+func (*ReplyData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *ReplyData) GetData() string {
 	if m != nil {
@@ -235,14 +170,14 @@ func (m *ReplyData) GetData() string {
 }
 
 type WrapperMessage struct {
-	Id       string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	SourceID string `protobuf:"bytes,2,opt,name=sourceID" json:"sourceID,omitempty"`
+	Id        string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	SourceID  string `protobuf:"bytes,2,opt,name=sourceID" json:"sourceID,omitempty"`
+	RequestID string `protobuf:"bytes,3,opt,name=requestID" json:"requestID,omitempty"`
 	// Types that are valid to be assigned to Msg:
-	//	*WrapperMessage_M1
-	//	*WrapperMessage_M2
-	//	*WrapperMessage_M3
-	//	*WrapperMessage_M4
-	//	*WrapperMessage_M5
+	//	*WrapperMessage_RequestContact
+	//	*WrapperMessage_RequestData
+	//	*WrapperMessage_Reply
+	//	*WrapperMessage_ReplyContact
 	//	*WrapperMessage_ReplyData
 	Msg isWrapperMessage_Msg `protobuf_oneof:"msg"`
 }
@@ -250,37 +185,33 @@ type WrapperMessage struct {
 func (m *WrapperMessage) Reset()                    { *m = WrapperMessage{} }
 func (m *WrapperMessage) String() string            { return proto.CompactTextString(m) }
 func (*WrapperMessage) ProtoMessage()               {}
-func (*WrapperMessage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*WrapperMessage) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 type isWrapperMessage_Msg interface {
 	isWrapperMessage_Msg()
 }
 
-type WrapperMessage_M1 struct {
-	M1 *RequestPing `protobuf:"bytes,3,opt,name=m1,oneof"`
+type WrapperMessage_RequestContact struct {
+	RequestContact *RequestContact `protobuf:"bytes,4,opt,name=requestContact,oneof"`
 }
-type WrapperMessage_M2 struct {
-	M2 *RequestContact `protobuf:"bytes,4,opt,name=m2,oneof"`
+type WrapperMessage_RequestData struct {
+	RequestData *RequestData `protobuf:"bytes,5,opt,name=requestData,oneof"`
 }
-type WrapperMessage_M3 struct {
-	M3 *RequestData `protobuf:"bytes,5,opt,name=m3,oneof"`
+type WrapperMessage_Reply struct {
+	Reply *Reply `protobuf:"bytes,6,opt,name=reply,oneof"`
 }
-type WrapperMessage_M4 struct {
-	M4 *Reply `protobuf:"bytes,6,opt,name=m4,oneof"`
-}
-type WrapperMessage_M5 struct {
-	M5 *ReplyContact `protobuf:"bytes,7,opt,name=m5,oneof"`
+type WrapperMessage_ReplyContact struct {
+	ReplyContact *ReplyContact `protobuf:"bytes,7,opt,name=replyContact,oneof"`
 }
 type WrapperMessage_ReplyData struct {
 	ReplyData *ReplyData `protobuf:"bytes,8,opt,name=replyData,oneof"`
 }
 
-func (*WrapperMessage_M1) isWrapperMessage_Msg()        {}
-func (*WrapperMessage_M2) isWrapperMessage_Msg()        {}
-func (*WrapperMessage_M3) isWrapperMessage_Msg()        {}
-func (*WrapperMessage_M4) isWrapperMessage_Msg()        {}
-func (*WrapperMessage_M5) isWrapperMessage_Msg()        {}
-func (*WrapperMessage_ReplyData) isWrapperMessage_Msg() {}
+func (*WrapperMessage_RequestContact) isWrapperMessage_Msg() {}
+func (*WrapperMessage_RequestData) isWrapperMessage_Msg()    {}
+func (*WrapperMessage_Reply) isWrapperMessage_Msg()          {}
+func (*WrapperMessage_ReplyContact) isWrapperMessage_Msg()   {}
+func (*WrapperMessage_ReplyData) isWrapperMessage_Msg()      {}
 
 func (m *WrapperMessage) GetMsg() isWrapperMessage_Msg {
 	if m != nil {
@@ -303,37 +234,37 @@ func (m *WrapperMessage) GetSourceID() string {
 	return ""
 }
 
-func (m *WrapperMessage) GetM1() *RequestPing {
-	if x, ok := m.GetMsg().(*WrapperMessage_M1); ok {
-		return x.M1
+func (m *WrapperMessage) GetRequestID() string {
+	if m != nil {
+		return m.RequestID
+	}
+	return ""
+}
+
+func (m *WrapperMessage) GetRequestContact() *RequestContact {
+	if x, ok := m.GetMsg().(*WrapperMessage_RequestContact); ok {
+		return x.RequestContact
 	}
 	return nil
 }
 
-func (m *WrapperMessage) GetM2() *RequestContact {
-	if x, ok := m.GetMsg().(*WrapperMessage_M2); ok {
-		return x.M2
+func (m *WrapperMessage) GetRequestData() *RequestData {
+	if x, ok := m.GetMsg().(*WrapperMessage_RequestData); ok {
+		return x.RequestData
 	}
 	return nil
 }
 
-func (m *WrapperMessage) GetM3() *RequestData {
-	if x, ok := m.GetMsg().(*WrapperMessage_M3); ok {
-		return x.M3
+func (m *WrapperMessage) GetReply() *Reply {
+	if x, ok := m.GetMsg().(*WrapperMessage_Reply); ok {
+		return x.Reply
 	}
 	return nil
 }
 
-func (m *WrapperMessage) GetM4() *Reply {
-	if x, ok := m.GetMsg().(*WrapperMessage_M4); ok {
-		return x.M4
-	}
-	return nil
-}
-
-func (m *WrapperMessage) GetM5() *ReplyContact {
-	if x, ok := m.GetMsg().(*WrapperMessage_M5); ok {
-		return x.M5
+func (m *WrapperMessage) GetReplyContact() *ReplyContact {
+	if x, ok := m.GetMsg().(*WrapperMessage_ReplyContact); ok {
+		return x.ReplyContact
 	}
 	return nil
 }
@@ -348,11 +279,10 @@ func (m *WrapperMessage) GetReplyData() *ReplyData {
 // XXX_OneofFuncs is for the internal use of the proto package.
 func (*WrapperMessage) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
 	return _WrapperMessage_OneofMarshaler, _WrapperMessage_OneofUnmarshaler, _WrapperMessage_OneofSizer, []interface{}{
-		(*WrapperMessage_M1)(nil),
-		(*WrapperMessage_M2)(nil),
-		(*WrapperMessage_M3)(nil),
-		(*WrapperMessage_M4)(nil),
-		(*WrapperMessage_M5)(nil),
+		(*WrapperMessage_RequestContact)(nil),
+		(*WrapperMessage_RequestData)(nil),
+		(*WrapperMessage_Reply)(nil),
+		(*WrapperMessage_ReplyContact)(nil),
 		(*WrapperMessage_ReplyData)(nil),
 	}
 }
@@ -361,29 +291,24 @@ func _WrapperMessage_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
 	m := msg.(*WrapperMessage)
 	// msg
 	switch x := m.Msg.(type) {
-	case *WrapperMessage_M1:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.M1); err != nil {
-			return err
-		}
-	case *WrapperMessage_M2:
+	case *WrapperMessage_RequestContact:
 		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.M2); err != nil {
+		if err := b.EncodeMessage(x.RequestContact); err != nil {
 			return err
 		}
-	case *WrapperMessage_M3:
+	case *WrapperMessage_RequestData:
 		b.EncodeVarint(5<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.M3); err != nil {
+		if err := b.EncodeMessage(x.RequestData); err != nil {
 			return err
 		}
-	case *WrapperMessage_M4:
+	case *WrapperMessage_Reply:
 		b.EncodeVarint(6<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.M4); err != nil {
+		if err := b.EncodeMessage(x.Reply); err != nil {
 			return err
 		}
-	case *WrapperMessage_M5:
+	case *WrapperMessage_ReplyContact:
 		b.EncodeVarint(7<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.M5); err != nil {
+		if err := b.EncodeMessage(x.ReplyContact); err != nil {
 			return err
 		}
 	case *WrapperMessage_ReplyData:
@@ -401,45 +326,37 @@ func _WrapperMessage_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
 func _WrapperMessage_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
 	m := msg.(*WrapperMessage)
 	switch tag {
-	case 3: // msg.m1
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(RequestPing)
-		err := b.DecodeMessage(msg)
-		m.Msg = &WrapperMessage_M1{msg}
-		return true, err
-	case 4: // msg.m2
+	case 4: // msg.requestContact
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
 		msg := new(RequestContact)
 		err := b.DecodeMessage(msg)
-		m.Msg = &WrapperMessage_M2{msg}
+		m.Msg = &WrapperMessage_RequestContact{msg}
 		return true, err
-	case 5: // msg.m3
+	case 5: // msg.requestData
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
 		msg := new(RequestData)
 		err := b.DecodeMessage(msg)
-		m.Msg = &WrapperMessage_M3{msg}
+		m.Msg = &WrapperMessage_RequestData{msg}
 		return true, err
-	case 6: // msg.m4
+	case 6: // msg.reply
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
 		msg := new(Reply)
 		err := b.DecodeMessage(msg)
-		m.Msg = &WrapperMessage_M4{msg}
+		m.Msg = &WrapperMessage_Reply{msg}
 		return true, err
-	case 7: // msg.m5
+	case 7: // msg.replyContact
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
 		msg := new(ReplyContact)
 		err := b.DecodeMessage(msg)
-		m.Msg = &WrapperMessage_M5{msg}
+		m.Msg = &WrapperMessage_ReplyContact{msg}
 		return true, err
 	case 8: // msg.replyData
 		if wire != proto.WireBytes {
@@ -458,28 +375,23 @@ func _WrapperMessage_OneofSizer(msg proto.Message) (n int) {
 	m := msg.(*WrapperMessage)
 	// msg
 	switch x := m.Msg.(type) {
-	case *WrapperMessage_M1:
-		s := proto.Size(x.M1)
-		n += proto.SizeVarint(3<<3 | proto.WireBytes)
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *WrapperMessage_M2:
-		s := proto.Size(x.M2)
+	case *WrapperMessage_RequestContact:
+		s := proto.Size(x.RequestContact)
 		n += proto.SizeVarint(4<<3 | proto.WireBytes)
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *WrapperMessage_M3:
-		s := proto.Size(x.M3)
+	case *WrapperMessage_RequestData:
+		s := proto.Size(x.RequestData)
 		n += proto.SizeVarint(5<<3 | proto.WireBytes)
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *WrapperMessage_M4:
-		s := proto.Size(x.M4)
+	case *WrapperMessage_Reply:
+		s := proto.Size(x.Reply)
 		n += proto.SizeVarint(6<<3 | proto.WireBytes)
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *WrapperMessage_M5:
-		s := proto.Size(x.M5)
+	case *WrapperMessage_ReplyContact:
+		s := proto.Size(x.ReplyContact)
 		n += proto.SizeVarint(7<<3 | proto.WireBytes)
 		n += proto.SizeVarint(uint64(s))
 		n += s
@@ -496,7 +408,6 @@ func _WrapperMessage_OneofSizer(msg proto.Message) (n int) {
 }
 
 func init() {
-	proto.RegisterType((*RequestPing)(nil), "main.RequestPing")
 	proto.RegisterType((*RequestContact)(nil), "main.RequestContact")
 	proto.RegisterType((*RequestData)(nil), "main.RequestData")
 	proto.RegisterType((*RequestStore)(nil), "main.RequestStore")
@@ -510,30 +421,29 @@ func init() {
 func init() { proto.RegisterFile("data.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 393 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0xcf, 0x6a, 0xdb, 0x40,
-	0x10, 0xc6, 0xeb, 0x95, 0x6c, 0xcb, 0xa3, 0xe2, 0xb6, 0x4b, 0x29, 0x8b, 0xc0, 0x60, 0xd4, 0x52,
-	0x0c, 0x05, 0x19, 0xcb, 0x76, 0xe9, 0xb5, 0xad, 0x0e, 0x35, 0x25, 0x24, 0x28, 0x87, 0x9c, 0x37,
-	0xd6, 0x22, 0x04, 0xd6, 0x9f, 0xec, 0xae, 0x0f, 0x7e, 0xa2, 0x1c, 0xf2, 0x92, 0x41, 0xc3, 0x4a,
-	0x91, 0x23, 0x43, 0x4e, 0xda, 0xd9, 0xf9, 0x7d, 0x33, 0xf3, 0x8d, 0x24, 0x80, 0x84, 0x6b, 0x1e,
-	0x54, 0xb2, 0xd4, 0x25, 0xb5, 0x73, 0x9e, 0x15, 0xfe, 0x0c, 0xdc, 0x58, 0x3c, 0x1c, 0x85, 0xd2,
-	0x37, 0x59, 0x91, 0xd2, 0x29, 0x90, 0x5d, 0xc2, 0x06, 0xf3, 0xc1, 0x62, 0x12, 0x93, 0x5d, 0xe2,
-	0xff, 0x82, 0xa9, 0x49, 0xff, 0x2d, 0x0b, 0xcd, 0xf7, 0xfa, 0x35, 0x41, 0xbf, 0xc0, 0x48, 0x73,
-	0x99, 0x0a, 0xcd, 0x08, 0xde, 0x99, 0xc8, 0x5f, 0xb6, 0x85, 0x23, 0xae, 0x79, 0x4f, 0xf6, 0x11,
-	0xac, 0xff, 0xe2, 0x64, 0x34, 0xf5, 0xd1, 0x8f, 0xe0, 0xbd, 0x11, 0xdc, 0xea, 0x52, 0x8a, 0xb7,
-	0x15, 0x94, 0x82, 0x5d, 0xd7, 0x66, 0x16, 0x5e, 0xe1, 0xd9, 0xff, 0x01, 0xc3, 0x58, 0x54, 0x87,
-	0x53, 0x4f, 0x4e, 0xc1, 0xae, 0xcd, 0x1b, 0x3d, 0x9e, 0xfd, 0xc7, 0x41, 0xdd, 0xb3, 0x3a, 0x9c,
-	0x3a, 0xe6, 0xb2, 0x56, 0x94, 0x25, 0xf4, 0x27, 0x38, 0x26, 0xa5, 0x18, 0x99, 0x5b, 0x0b, 0x37,
-	0xf4, 0x82, 0x7a, 0x6d, 0x41, 0x57, 0x15, 0x98, 0x67, 0xdc, 0xb2, 0xde, 0x35, 0x8c, 0xbb, 0xfb,
-	0x8a, 0xda, 0x39, 0x22, 0xca, 0x60, 0xfc, 0x3b, 0x49, 0xa4, 0x50, 0xca, 0x8c, 0xd2, 0x84, 0xd4,
-	0x03, 0x27, 0xca, 0x94, 0xe6, 0xc5, 0x5e, 0x18, 0x4b, 0x6d, 0xec, 0x2f, 0x61, 0x82, 0x2d, 0x9b,
-	0x5d, 0x9e, 0x4d, 0x79, 0xc9, 0xda, 0x13, 0x81, 0xe9, 0x9d, 0xe4, 0x55, 0x25, 0xe4, 0x95, 0x50,
-	0x8a, 0xa7, 0xa2, 0x27, 0xf3, 0xc0, 0x51, 0xe5, 0x51, 0xee, 0xc5, 0x2e, 0x32, 0xd2, 0x36, 0xa6,
-	0x5f, 0x81, 0xe4, 0x2b, 0x9c, 0xc2, 0x0d, 0x3f, 0x35, 0x96, 0xdb, 0xcf, 0xe4, 0xdf, 0xbb, 0x98,
-	0xe4, 0x2b, 0xfa, 0x1d, 0x48, 0x1e, 0x32, 0x1b, 0xa1, 0xcf, 0x67, 0x90, 0x31, 0x8f, 0x5c, 0x88,
-	0xc5, 0xd6, 0x6c, 0x78, 0xa1, 0x58, 0x6d, 0x07, 0xa1, 0x35, 0x9d, 0x01, 0xc9, 0x37, 0x6c, 0x84,
-	0x90, 0xdb, 0x59, 0x32, 0xa6, 0x37, 0xf4, 0x1b, 0x90, 0x7c, 0xcb, 0xc6, 0x98, 0xa6, 0xfd, 0x77,
-	0x80, 0xd4, 0x96, 0x2e, 0x61, 0x22, 0x9b, 0x35, 0x31, 0x07, 0xe1, 0x0f, 0x1d, 0xd8, 0xb4, 0x7b,
-	0x61, 0xfe, 0x0c, 0xc1, 0xca, 0x55, 0x7a, 0x3f, 0xc2, 0x5f, 0x62, 0xfd, 0x1c, 0x00, 0x00, 0xff,
-	0xff, 0xb9, 0xb7, 0xe1, 0x67, 0x20, 0x03, 0x00, 0x00,
+	// 383 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x64, 0x92, 0xcb, 0x4e, 0xeb, 0x30,
+	0x10, 0x86, 0x73, 0x69, 0x7a, 0x99, 0x54, 0x39, 0x07, 0x0b, 0x21, 0xab, 0x20, 0xb5, 0x0a, 0x9b,
+	0xac, 0x82, 0x54, 0x2e, 0x62, 0x85, 0x04, 0x64, 0x91, 0x08, 0x21, 0x24, 0xb3, 0x60, 0x6d, 0x1a,
+	0xab, 0x8a, 0xd4, 0x36, 0xc1, 0x76, 0x17, 0x7d, 0x12, 0x5e, 0x91, 0xc7, 0x40, 0x76, 0x9d, 0xd6,
+	0xa5, 0xab, 0xcc, 0x78, 0xbe, 0xdf, 0xf3, 0x7b, 0x26, 0x00, 0x25, 0x95, 0x34, 0x6d, 0x78, 0x2d,
+	0x6b, 0xd4, 0x59, 0xd2, 0x6a, 0x15, 0x27, 0x10, 0x11, 0xf6, 0xb5, 0x66, 0x42, 0x3e, 0xd7, 0x2b,
+	0x49, 0x67, 0x12, 0x9d, 0x41, 0x57, 0x52, 0x3e, 0x67, 0x12, 0xbb, 0x13, 0x37, 0x19, 0x10, 0x93,
+	0xc5, 0x63, 0x08, 0x0d, 0x99, 0x51, 0x49, 0xd1, 0x7f, 0xf0, 0x5f, 0xd8, 0xc6, 0x30, 0x2a, 0x8c,
+	0x6f, 0x60, 0x68, 0x80, 0x77, 0x59, 0x73, 0x76, 0x4c, 0x20, 0x04, 0x1d, 0xa5, 0xc5, 0x9e, 0x3e,
+	0xd2, 0x71, 0x7c, 0x0e, 0x01, 0x61, 0xcd, 0x42, 0x17, 0x95, 0x3b, 0xc3, 0xeb, 0x38, 0xfe, 0x76,
+	0xd5, 0x9d, 0xcd, 0x62, 0xd3, 0x9a, 0xbb, 0x83, 0xbe, 0x09, 0x05, 0xf6, 0x26, 0x7e, 0x12, 0x4e,
+	0x47, 0xa9, 0x7a, 0x47, 0x6a, 0x53, 0xa9, 0xf9, 0x92, 0x1d, 0x3b, 0x7a, 0x83, 0x5e, 0x7b, 0x45,
+	0x04, 0x5e, 0x91, 0x99, 0x2e, 0x5e, 0x91, 0x21, 0x0c, 0xbd, 0xc7, 0xb2, 0xe4, 0x4c, 0x08, 0xe3,
+	0xab, 0x4d, 0xd1, 0x08, 0xfa, 0x59, 0x25, 0x24, 0x5d, 0xcd, 0x18, 0xf6, 0x75, 0x69, 0x97, 0xc7,
+	0x63, 0x18, 0xe8, 0x96, 0x7a, 0x16, 0xad, 0x75, 0xcf, 0xb2, 0xfe, 0xe3, 0x41, 0xf4, 0xc1, 0x69,
+	0xd3, 0x30, 0xfe, 0xca, 0x84, 0xa0, 0x73, 0xa6, 0x3a, 0x57, 0x65, 0xdb, 0xb9, 0x2a, 0xd5, 0xfd,
+	0xa2, 0x5e, 0xf3, 0x19, 0x2b, 0x32, 0x23, 0xdd, 0xe5, 0xe8, 0x02, 0x06, 0x7c, 0x3b, 0xcc, 0x22,
+	0x33, 0xcd, 0xf7, 0x07, 0xe8, 0x01, 0x22, 0x7e, 0xb0, 0x35, 0xdc, 0x99, 0xb8, 0x49, 0x38, 0x3d,
+	0x6d, 0x87, 0x61, 0xd7, 0x72, 0x87, 0xfc, 0xa1, 0xd1, 0x2d, 0x84, 0x7c, 0xbf, 0x4b, 0x1c, 0x68,
+	0xf1, 0xc9, 0x81, 0x58, 0x15, 0x72, 0x87, 0xd8, 0x1c, 0xba, 0x84, 0x80, 0xab, 0x47, 0xe3, 0xae,
+	0x16, 0x84, 0xd6, 0xe8, 0x73, 0x87, 0x6c, 0x6b, 0xe8, 0x1e, 0x86, 0xdc, 0x5a, 0x06, 0xee, 0x69,
+	0x16, 0x1d, 0xaf, 0x29, 0x77, 0xc8, 0x01, 0x89, 0xae, 0xd4, 0x9b, 0xcd, 0x4c, 0x71, 0x5f, 0xcb,
+	0xfe, 0x59, 0x32, 0xe3, 0x68, 0xcf, 0x3c, 0x05, 0xe0, 0x2f, 0xc5, 0xfc, 0xb3, 0xab, 0x7f, 0xe8,
+	0xeb, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xd9, 0xea, 0x4b, 0xa5, 0xde, 0x02, 0x00, 0x00,
 }
