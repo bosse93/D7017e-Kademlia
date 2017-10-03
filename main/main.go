@@ -7,7 +7,7 @@ import (
 	"net"
 	"encoding/hex"
 	"io/ioutil"
-	"os"
+	//"os"
 )
 
 func main() {
@@ -119,8 +119,9 @@ func StartNetwork() {
 	testStore := HashKademliaID("testStore.txt")
 	fmt.Println("test store " + testStore.String())
 
-	pwd, _ := os.Getwd()
-	dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/main/testStore.txt")
+	//pwd, _ := os.Getwd()
+	//dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/main/testStore.txt")
+	dat, err := ioutil.ReadFile("main/testStore.txt")
 	check(err)
 
 	kademlia := NewKademlia(lastNetwork)
@@ -146,17 +147,6 @@ func StartNetwork() {
 
 }
 
-func printFirstNodeRT(firstNode Contact, firstNodeRT *RoutingTable) {
-	fmt.Println("Node: " + firstNode.ID.String())
-	for z := range firstNodeRT.buckets {
-		contactList := firstNodeRT.buckets[z]
-		fmt.Println("Bucket: " + strconv.Itoa(z))
-		for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
-			contact := elt.Value.(Contact)
-			fmt.Println(contact.String())
-		}
-	}
-}
 
 func printLastNodeRT(nodeList []*RoutingTable) {
 	lastNode := nodeList[len(nodeList)-1]
@@ -171,21 +161,7 @@ func printLastNodeRT(nodeList []*RoutingTable) {
 	}
 }
 
-func printAllNodesRT(nodeList []*RoutingTable) {
-	for w := range nodeList {
-		fmt.Println("Node: " + nodeList[w].me.String())
-		for z := range nodeList[w].buckets {
-			contactList := nodeList[w].buckets[z]
-			fmt.Println("Bucket: " + strconv.Itoa(z))
-			for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
-				contact := elt.Value.(Contact)
-				fmt.Println(contact.String())
-			}
-		}
-	}
 
-
-}
 
 func check(e error) {
 	if e != nil {

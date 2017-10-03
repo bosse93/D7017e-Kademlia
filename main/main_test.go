@@ -76,7 +76,7 @@ func TestHandleRequest(t *testing.T) {
 	//go sendResponse(ser, remoteaddr)
 	go HandleRequest(ser, remoteaddr, string(p), network)
 	time.Sleep(3*time.Second)
-	connect("Store", "hej")
+	//connect("Store", "hej")
 }
 
 func TestStartNetwork(t *testing.T) {

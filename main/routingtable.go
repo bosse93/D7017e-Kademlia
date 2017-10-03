@@ -24,11 +24,6 @@ func (routingTable *RoutingTable) AddContact(contact Contact) {
 	bucket.AddContact(contact)
 }
 
-func (routingTable *RoutingTable) FindClosestContactsChannel(target *KademliaID, count int, threadChannel chan []Contact) {
-	closest := routingTable.FindClosestContacts(target, count)
-	threadChannel <- closest
-}
-
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {
 	var candidates ContactCandidates
 	bucketIndex := routingTable.getBucketIndex(target)
