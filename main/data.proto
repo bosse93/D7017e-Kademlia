@@ -21,7 +21,6 @@ message ReplyPing {
   message Contact {
     string ID = 1;
     string Address = 2;
-    string Distance = 3;
   }
 }
 
@@ -29,7 +28,6 @@ message ReplyContactList {
   message Contact {
     string ID = 1;
     string Address = 2;
-    string Distance = 3;
   }
 
   repeated Contact Contacts = 1;
