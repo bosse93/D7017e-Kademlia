@@ -6,8 +6,11 @@ import (
 	"time"
 	"net"
 	"encoding/hex"
-	"io/ioutil"
+	//"io/ioutil"
 	//"os"
+	"os"
+	"net/http"
+	"io"
 )
 
 func main() {
@@ -116,25 +119,28 @@ func StartNetwork() {
 	//printFirstNodeRT(firstNode, firstNodeRT)
 	//printLastNodeRT(nodeList)
 
-	testStore := HashKademliaID("testStore.txt")
-	fmt.Println("test store " + testStore.String())
+	testStore := HashKademliaID("workshop.jpeg")
 
 	//pwd, _ := os.Getwd()
 	//dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/main/testStore.txt")
-	dat, err := ioutil.ReadFile("main/testStore.txt")
-	check(err)
+	//dat, err := ioutil.ReadFile("main/testStore.txt")
+	//check(err)
 
 	kademlia := NewKademlia(lastNetwork)
-	kademlia.Store(testStore, string(dat))
+	//store link to workshop jpg
+	kademlia.Store(testStore, "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
 	time.Sleep(3*time.Second)
 	kademlia = NewKademlia(lastNetwork)
+	//lookup workshop jpg
 	data, success := kademlia.LookupData(testStore.String())
 	if(success) {
 		fmt.Println("Data returned " + data)
 	} else {
 		fmt.Println("Data not found")
 	}
-
+	//download workshop jpg, to be done in frontend when response with url arrives.
+	downerr := downloadFile("workshop.jpeg", data)
+	check(downerr)
 	//Setup Frontend
 	StartFrontend(lastNetwork)
 
@@ -167,4 +173,28 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func downloadFile(filepath string, url string) (err error) {
+
+	// Create the file
+	out, err := os.Create(filepath)
+	if err != nil  {
+		return err
+	}
+	defer out.Close()
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	// Writer the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil  {
+		return err
+	}
+
+	return nil
 }
