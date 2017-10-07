@@ -145,11 +145,6 @@ func sendPacket(data []byte, targetAddress *net.UDPAddr) {
 
 func downloadFile(filepath string, url string) (err error) {
 	fmt.Println("filepath: " + filepath + " url: " + url)
-	if url == "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1" {
-		fmt.Println("same")
-	} else {
-		fmt.Println("different")
-	}
 	// Create the file
 	out, err := os.Create(filepath)
 	if err != nil  {
