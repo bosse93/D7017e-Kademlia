@@ -64,9 +64,9 @@ func (network *Network) SendPingMessage(contact *Contact, returnChannel chan int
 	packet := &RequestPing{}
 	wrapperMsg := &WrapperMessage_RequestPing{packet}
 	wrapper := &WrapperMessage{"RequestPing", network.node.rt.me.ID.String(), messageID.String(), wrapperMsg}
-	
+
 	network.createChannel(messageID, returnChannel)
-	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)	
+	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
 
 	go network.TimeoutWaiter(5, returnChannel, messageID)
 }
@@ -83,7 +83,7 @@ func (network *Network) SendFindContactMessage(targetID *KademliaID, contact *Co
 
 	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
-	
+
 	go network.TimeoutWaiter(5, returnChannel, messageID)
 }
 
@@ -134,7 +134,7 @@ func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sou
 
 	switch message.ID {
 		case "ReplyPing":
-			contact := NewContact(NewKademliaID(message.GetReplyPing().GetID()), message.GetReplyPing().GetAddress()) 
+			contact := NewContact(NewKademliaID(message.GetReplyPing().GetID()), message.GetReplyPing().GetAddress())
 			answerChannel<-contact
 
 		case "ReplyContactList":
@@ -154,7 +154,7 @@ func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sou
 			fmt.Println("Not a valid Reply ID. ID: " + message.ID)
 			return
 	}
-	
+
 }
 
 
@@ -165,7 +165,7 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 		return
 	}
 
-	var wrapper *WrapperMessage 
+	var wrapper *WrapperMessage
 
 	switch message.ID {
 		case "RequestPing":
@@ -178,7 +178,7 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 
 			packet := &ReplyContactList{contactListReply}
 			wrapperMsg := &WrapperMessage_ReplyContactList{packet}
-			wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}			
+			wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 
 		case "RequestData":
 			if data, ok := network.node.data[*NewKademliaID(message.GetRequestData().Key)]; ok {

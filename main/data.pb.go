@@ -18,7 +18,7 @@ It has these top-level messages:
 	ReplyStore
 	WrapperMessage
 */
-package proto
+package main
 
 import proto "D7024e-Kademlia/github.com/protobuf/proto"
 import fmt "fmt"

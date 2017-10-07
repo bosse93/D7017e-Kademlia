@@ -119,14 +119,14 @@ func StartNetwork() {
 	//printFirstNodeRT(firstNode, firstNodeRT)
 	//printLastNodeRT(nodeList)
 
-	testStore := HashKademliaID("workshop.jpeg")
+	//testStore := HashKademliaID("workshop.jpeg")
 
 	//pwd, _ := os.Getwd()
 	//dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/main/testStore.txt")
 	//dat, err := ioutil.ReadFile("main/testStore.txt")
 	//check(err)
 
-	kademlia := NewKademlia(lastNetwork)
+	/*kademlia := NewKademlia(lastNetwork)
 	//store link to workshop jpg
 	kademlia.Store(testStore, "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
 	time.Sleep(3*time.Second)
@@ -140,7 +140,7 @@ func StartNetwork() {
 	}
 	//download workshop jpg, to be done in frontend when response with url arrives.
 	downerr := downloadFile("workshop.jpeg", data)
-	check(downerr)
+	check(downerr)*/
 	//Setup Frontend
 	StartFrontend(lastNetwork)
 
