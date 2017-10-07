@@ -7,20 +7,24 @@ import (
   "fmt"
 	"net"
 	"bufio"
+	protoPack "D7024e-Kademlia/proto"
+	"log"
+	"D7024e-Kademlia/github.com/protobuf/proto"
 )
 //FRONTEND CLI
 
 //Make request to a node
 
-func connect(Usage string, arg0 string){
+func connect(Usage string, m *protoPack.WrapperMessage){
 	p :=  make([]byte, 2048)
+
 	conn, err := net.Dial("udp", "127.0.0.1:1234")
 	if err != nil {
 		fmt.Printf("Some error %v", err)
 		return
 	}
-
-	fmt.Fprintf(conn, Usage + arg0)
+	sendPacket(marshalHelper(m), sourceAddress)
+	//fmt.Fprintf(conn, Usage + arg0)
 	_, err = bufio.NewReader(conn).Read(p)
 	if err == nil {
 		fmt.Printf("%s\n", p)
@@ -50,12 +54,16 @@ func main() {
     {
       Name:    "store",
       Aliases: []string{"s", "Store", "S"},
-      Usage:   "Store arg0",
+      Usage:   "Store arg0 arg1",
       Action: func(c *cli.Context) error {
-        if c.NArg() > 0 {
+        if c.NArg() > 1 {
+			packet := &protoPack.RequestStore{c.Args().Get(0), c.Args().Get(1)}
+			wrapperMsg := &protoPack.WrapperMessage_RequestStore{packet}
+			wrapper := &protoPack.WrapperMessage{"RequestContact", "frontend", "FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", wrapperMsg}
+
           //store c.Args().First()
           fmt.Println("Sending server request")
-          connect("Store", c.Args().First())
+          connect("Store", wrapper)
         }
         return nil
       },
@@ -106,3 +114,18 @@ func main() {
   app.Run(os.Args)
 }
 
+func marshalHelper(wrapper *protoPack.WrapperMessage) []byte{
+	data, err := protoPack.Marshal(wrapper)
+	if err != nil {
+		log.Fatal("Marshall Error: ", err)
+	}
+	return data
+}
+
+func sendPacket(data []byte, targetAddress *net.UDPAddr) {
+	buf := []byte(data)
+	_, err := listenConnection.WriteToUDP(buf, targetAddress)
+	if err != nil {
+		log.Println(err)
+	}
+}
