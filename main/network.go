@@ -90,13 +90,9 @@ func (network *Network) SendFindContactMessage(targetID *KademliaID, contact *Co
 
 	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
-<<<<<<< HEAD
 	
 	go network.TimeoutWaiter(network.timeoutTime, returnChannel, messageID)
-=======
 
-	go network.TimeoutWaiter(5, returnChannel, messageID)
->>>>>>> origin/master
 }
 
 
@@ -171,11 +167,8 @@ func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sou
 			fmt.Println("Not a valid Reply ID. ID: " + message.ID)
 			return
 	}
-<<<<<<< HEAD
 	go network.updateRoutingTable(message.SourceID, sourceAddress.String())
-=======
 
->>>>>>> origin/master
 }
 
 
@@ -203,12 +196,9 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 
 			packet := &ReplyContactList{contactListReply}
 			wrapperMsg := &WrapperMessage_ReplyContactList{packet}
-<<<<<<< HEAD
 			wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}			
 			break
-=======
-			wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
->>>>>>> origin/master
+
 
 		case "RequestData":
 			if data, ok := network.node.data[*NewKademliaID(message.GetRequestData().Key)]; ok {
