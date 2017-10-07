@@ -180,6 +180,8 @@ func (kademlia *Kademlia) Store(key *KademliaID, data string) {
 		switch returnValue := returnValue.(type) {
 			case string:
 				fmt.Println("Store " + strconv.Itoa(i) + " Reply: " + returnValue)
+			case bool:
+				fmt.Println("Store request timeout")
 			default:
 				fmt.Println("Something went wrong")
 		}
