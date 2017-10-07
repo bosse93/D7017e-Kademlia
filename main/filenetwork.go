@@ -55,8 +55,11 @@ func (network *FileNetwork) HandleFileRequest(connection net.Conn) {
         fmt.Println("There is an error reading from connection", error.Error())
         return
     }
+    fmt.Println("Buffer contained: " + string(buffer))
+    //filetoOpen := string(buffer) + ".txt"
 
-    file, err := os.Open(strings.TrimSpace(string(buffer))) // For read access.
+    fmt.Println("OPEN FILE TO SEND")
+    file, err := os.Open("776f726b73686f702e6a70656700000000000000.txt") // For read access.
 	if err != nil {
 	    log.Fatal(err)
 	}
@@ -82,7 +85,7 @@ func (network *FileNetwork) downloadFile(fileID *KademliaID, address string) {
     //fileBuffer := make([]byte, 1024)
 
     //var err error
-    file, err := os.Create(strings.TrimSpace(fileID.String()))
+    file, err := os.Create("test/"+strings.TrimSpace(fileID.String())+".txt")
     if err != nil {
         log.Fatal(err)
     }
