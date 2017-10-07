@@ -62,7 +62,6 @@ func (network *Network) Listen(buf []byte) {
 	}
 }
 
-
 func (network *Network) SendPingMessage(contact Contact, returnChannel chan interface{}) {
 	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)

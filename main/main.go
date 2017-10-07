@@ -62,25 +62,22 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 
 }
 
-func CreateNodes(amount int) *Network{
+func CreateNodes(amount int) (lastNetwork *Network, directories []string){
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 	node := NewNode(firstNodeRT)
 	lastTCPNetwork := NewFileNetwork(node, "localhost", 8000)
-	lastNetwork := NewNetwork(node, lastTCPNetwork, "localhost", 8000)
-
-
-	nodeList := []*RoutingTable{firstNodeRT}
+	lastNetwork = NewNetwork(node, lastTCPNetwork, "localhost", 8000)
+	//nodeList := []*RoutingTable{firstNodeRT}
 	//lastNode := firstNode
 	//create 100 nodes
 	for i := 0; i < amount; i++ {
 		port := 8001 + i
 		a := "localhost:" + strconv.Itoa(port)
 
-
 		ID := NewRandomKademliaID()
 		rt := NewRoutingTable(NewContact(ID, a))
-		nodeList = append(nodeList, rt)
+		//nodeList = append(nodeList, rt)
 		rt.AddContact(firstNodeRT.me)
 		node := NewNode(rt)
 		tcpNetwork := NewFileNetwork(node, "localhost", port)
@@ -97,9 +94,12 @@ func CreateNodes(amount int) *Network{
 			}
 		}
 		lastNetwork = nw
-
+		if _, err := os.Stat(ID.String()); os.IsNotExist(err) {
+			os.Mkdir(ID.String(), 0755)
+		}
+		directories = append(directories, ID.String())
 	}
-	return lastNetwork
+	return
 }
 
 func StartFrontend(lastNetwork *Network){
@@ -136,8 +136,8 @@ func StartFrontend(lastNetwork *Network){
 
 func StartNetwork() {
 	//Creates x amount of nodes in a network
-	lastNetwork := CreateNodes(50)
-
+	lastNetwork, directories := CreateNodes(10)
+	defer removeDirectories(directories)
 	//printFirstNodeRT(firstNode, firstNodeRT)
 	//printLastNodeRT(nodeList)
 
@@ -174,6 +174,12 @@ func StartNetwork() {
 		}
 	}*/
 
+}
+func removeDirectories(directories []string) {
+	fmt.Println("in remove")
+	for i := range directories{
+		os.Remove(directories[i])
+	}
 }
 
 
