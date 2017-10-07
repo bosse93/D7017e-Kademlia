@@ -7,7 +7,7 @@ import (
 	"net"
 	"encoding/hex"
 	//"io/ioutil"
-	//"os"
+	"strings"
 	"os"
 	"net/http"
 	"io"
@@ -25,23 +25,39 @@ func HashKademliaID(fileName string) *KademliaID{
 	return NewKademliaID(f)
 }
 
-func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, p string, network *Network){
+func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network){
 	//_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
 
-	if p[:5]=="Store" {
-		fmt.Println("this was a store message with arg "+ p[5:])
+	if args[0]=="store" {
+		fmt.Println("this was a store message with arg "+ args[0])
 		kademlia := NewKademlia(network)
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
-		newKad := HashKademliaID(p[5:])
-		kademlia.Store(newKad, "data to store")
+		newKad := HashKademliaID(args[1])
+		kademlia.Store(newKad, args[2])
 		_,storeErr := conn.WriteToUDP([]byte("stored: "+newKad.String()), addr)
 		if storeErr != nil {
 			fmt.Println("something went shit in store: %v", storeErr)
 		}
 
-	} else if p[:3]=="Cat" {
-		fmt.Println("I got a Cat call")
+	} else if args[0]=="cat" {
+		kademlia := NewKademlia(network)
+		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+		newKad := HashKademliaID(args[1])
+		data, success := kademlia.LookupData(newKad.String())
+		if success {
+			_,err := conn.WriteToUDP([]byte(data), addr)
+			if err != nil {
+				fmt.Println("something went shit in lookup: %v", err)
+			}
+		} else {
+			_,err := conn.WriteToUDP([]byte("no data found"), addr)
+			if err != nil {
+				fmt.Println("something went shit in lookup: %v", err)
+			}
+		}
+
 	}
 
 }
@@ -82,7 +98,7 @@ func CreateNodes(amount int) *Network{
 }
 
 func StartFrontend(lastNetwork *Network){
-	p := make([]byte, 2048)
+
 	addr := net.UDPAddr{
 		Port: 1234,
 		IP: net.ParseIP("127.0.0.1"),
@@ -93,13 +109,14 @@ func StartFrontend(lastNetwork *Network){
 		return
 	}
 	for {
+		p := make([]byte, 2048)
 		_,remoteaddr,err := ser.ReadFromUDP(p)
+		split := strings.Split(string(p), " ")
 		fmt.Printf("Read a message from %v %s \n", remoteaddr, p)
-		fmt.Println(p)
-		fmt.Println(string(p))
-		if string(p) =="Cat"{
+		fmt.Println(split)
+		if split[0] == "cat"{
 			fmt.Println("I got cat back do cat stuff")
-		} else if string(p) == "Store" {
+		} else if split[0] == "store" {
 			fmt.Println("I got Store back")
 		}
 		if err !=  nil {
@@ -107,7 +124,7 @@ func StartFrontend(lastNetwork *Network){
 			continue
 		}
 		//go sendResponse(ser, remoteaddr)
-		go HandleRequest(ser, remoteaddr, string(p), lastNetwork)
+		go HandleRequest(ser, remoteaddr, split, lastNetwork)
 
 	}
 }
@@ -142,6 +159,7 @@ func StartNetwork() {
 	downerr := downloadFile("workshop.jpeg", data)
 	check(downerr)*/
 	//Setup Frontend
+	downloadFile("workshop.jpeg", "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
 	StartFrontend(lastNetwork)
 
 
@@ -176,7 +194,7 @@ func check(e error) {
 }
 
 func downloadFile(filepath string, url string) (err error) {
-
+	fmt.Println("filepath: " + filepath + " url: " + url)
 	// Create the file
 	out, err := os.Create(filepath)
 	if err != nil  {
