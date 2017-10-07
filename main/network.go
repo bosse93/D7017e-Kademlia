@@ -71,9 +71,9 @@ func (network *Network) SendPingMessage(contact Contact, returnChannel chan inte
 	packet := &RequestPing{}
 	wrapperMsg := &WrapperMessage_RequestPing{packet}
 	wrapper := &WrapperMessage{"RequestPing", network.node.rt.me.ID.String(), messageID.String(), wrapperMsg}
-	
+
 	network.createChannel(messageID, returnChannel)
-	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)	
+	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
 
 	go network.TimeoutWaiter(network.timeoutTime, returnChannel, messageID)
 }
@@ -90,8 +90,13 @@ func (network *Network) SendFindContactMessage(targetID *KademliaID, contact *Co
 
 	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
+<<<<<<< HEAD
 	
 	go network.TimeoutWaiter(network.timeoutTime, returnChannel, messageID)
+=======
+
+	go network.TimeoutWaiter(5, returnChannel, messageID)
+>>>>>>> origin/master
 }
 
 
@@ -142,7 +147,7 @@ func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sou
 
 	switch message.ID {
 		case "ReplyPing":
-			contact := NewContact(NewKademliaID(message.GetReplyPing().GetID()), message.GetReplyPing().GetAddress()) 
+			contact := NewContact(NewKademliaID(message.GetReplyPing().GetID()), message.GetReplyPing().GetAddress())
 			answerChannel<-contact
 			return
 
@@ -166,7 +171,11 @@ func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sou
 			fmt.Println("Not a valid Reply ID. ID: " + message.ID)
 			return
 	}
+<<<<<<< HEAD
 	go network.updateRoutingTable(message.SourceID, sourceAddress.String())
+=======
+
+>>>>>>> origin/master
 }
 
 
@@ -177,7 +186,7 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 		return
 	}
 
-	var wrapper *WrapperMessage 
+	var wrapper *WrapperMessage
 
 	switch message.ID {
 		case "RequestPing":
@@ -194,8 +203,12 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 
 			packet := &ReplyContactList{contactListReply}
 			wrapperMsg := &WrapperMessage_ReplyContactList{packet}
+<<<<<<< HEAD
 			wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}			
 			break
+=======
+			wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
+>>>>>>> origin/master
 
 		case "RequestData":
 			if data, ok := network.node.data[*NewKademliaID(message.GetRequestData().Key)]; ok {
