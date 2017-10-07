@@ -49,7 +49,10 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, p string, network *Netw
 func CreateNodes(amount int) *Network{
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
-	lastNetwork := NewNetwork(NewNode(firstNodeRT), "localhost", 8000)
+	node := NewNode(firstNodeRT)
+	lastTCPNetwork := NewFileNetwork(node, "localhost", 8000)
+	lastNetwork := NewNetwork(node, lastTCPNetwork, "localhost", 8000)
+
 
 	nodeList := []*RoutingTable{firstNodeRT}
 	//lastNode := firstNode
@@ -63,7 +66,9 @@ func CreateNodes(amount int) *Network{
 		rt := NewRoutingTable(NewContact(ID, a))
 		nodeList = append(nodeList, rt)
 		rt.AddContact(firstNodeRT.me)
-		nw := NewNetwork(NewNode(rt), "localhost", port)
+		node := NewNode(rt)
+		tcpNetwork := NewFileNetwork(node, "localhost", port)
+		nw := NewNetwork(node, tcpNetwork, "localhost", port)
 		fmt.Println("Ny Nod varv " + strconv.Itoa(i+1) + ": " + rt.me.String())
 		//go nw.Listen("localhost", port)
 		time.Sleep(500 * time.Millisecond)
@@ -114,7 +119,7 @@ func StartFrontend(lastNetwork *Network){
 
 func StartNetwork() {
 	//Creates x amount of nodes in a network
-	lastNetwork := CreateNodes(10)
+	lastNetwork := CreateNodes(50)
 
 	//printFirstNodeRT(firstNode, firstNodeRT)
 	//printLastNodeRT(nodeList)

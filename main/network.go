@@ -15,13 +15,19 @@ type Network struct {
 	waitingAnswerList map[KademliaID](chan interface{})
 	listenConnection *net.UDPConn
 	mux *sync.Mutex
+	rtMux *sync.Mutex
+	timeoutTime int
+	fileNetwork *FileNetwork
 }
 
-func NewNetwork(node *Node, ip string, port int) *Network {
+func NewNetwork(node *Node, fileNetwork *FileNetwork, ip string, port int) *Network {
 	network := &Network{}
 	network.node = node
 	network.waitingAnswerList = make(map[KademliaID]chan interface{})
 	network.mux = &sync.Mutex{}
+	network.rtMux = &sync.Mutex{}
+	network.timeoutTime = 5
+	network.fileNetwork = fileNetwork
 
 	// ESTABLISH UDP CONNECTION
 	serverAddr, err := net.ResolveUDPAddr("udp", ip + ":" + strconv.Itoa(port))
@@ -33,6 +39,7 @@ func NewNetwork(node *Node, ip string, port int) *Network {
 	buf := make([]byte, 4096)
 	fmt.Println("Listening on port " + strconv.Itoa(port))
 	go network.Listen(buf)
+	go network.RepublishData()
 
 	return network
 }
@@ -56,7 +63,7 @@ func (network *Network) Listen(buf []byte) {
 }
 
 
-func (network *Network) SendPingMessage(contact *Contact, returnChannel chan interface{}) {
+func (network *Network) SendPingMessage(contact Contact, returnChannel chan interface{}) {
 	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	CheckError(err)
@@ -68,7 +75,7 @@ func (network *Network) SendPingMessage(contact *Contact, returnChannel chan int
 	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)	
 
-	go network.TimeoutWaiter(5, returnChannel, messageID)
+	go network.TimeoutWaiter(network.timeoutTime, returnChannel, messageID)
 }
 
 
@@ -84,7 +91,7 @@ func (network *Network) SendFindContactMessage(targetID *KademliaID, contact *Co
 	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
 	
-	go network.TimeoutWaiter(5, returnChannel, messageID)
+	go network.TimeoutWaiter(network.timeoutTime, returnChannel, messageID)
 }
 
 
@@ -100,7 +107,7 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, retur
 	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
 
-	go network.TimeoutWaiter(5, returnChannel, messageID)
+	go network.TimeoutWaiter(network.timeoutTime, returnChannel, messageID)
 }
 
 func (network *Network) SendStoreMessage(hash string, data string, address string, returnChannel chan interface{}) {
@@ -115,7 +122,7 @@ func (network *Network) SendStoreMessage(hash string, data string, address strin
 	network.createChannel(messageID, returnChannel)
 	network.sendPacket(network.marshalHelper(wrapper), remoteAddr)
 
-	go network.TimeoutWaiter(5, returnChannel, messageID)
+	go network.TimeoutWaiter(network.timeoutTime, returnChannel, messageID)
 }
 
 func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sourceAddress *net.UDPAddr) {
@@ -132,10 +139,12 @@ func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sou
 		return
 	}
 
+
 	switch message.ID {
 		case "ReplyPing":
 			contact := NewContact(NewKademliaID(message.GetReplyPing().GetID()), message.GetReplyPing().GetAddress()) 
 			answerChannel<-contact
+			return
 
 		case "ReplyContactList":
 			contactList := []Contact{}
@@ -143,18 +152,21 @@ func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sou
 				contactList = append(contactList, NewContact(NewKademliaID(message.GetReplyContactList().Contacts[i].GetID()), message.GetReplyContactList().Contacts[i].GetAddress()))
 			}
 			answerChannel<-contactList
+			break
 
 		case "ReplyData":
 			answerChannel <- message.GetReplyData().GetData()
+			break
 
 		case "ReplyStore":
 			answerChannel<-message.GetReplyStore().GetData()
+			break
 
 		default:
 			fmt.Println("Not a valid Reply ID. ID: " + message.ID)
 			return
 	}
-	
+	go network.updateRoutingTable(message.SourceID, sourceAddress.String())
 }
 
 
@@ -169,16 +181,21 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 
 	switch message.ID {
 		case "RequestPing":
+			fmt.Println("Ping Recieved")
 			packet := &ReplyPing{network.node.rt.me.ID.String(), network.node.rt.me.Address}
 			wrapperMsg := &WrapperMessage_ReplyPing{packet}
 			wrapper = &WrapperMessage{"ReplyPing", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
+			break
 
 		case "RequestContact":
+			network.rtMux.Lock()
 			contactListReply := network.getClosestContacts(message.GetRequestContact().GetTarget())
+			network.rtMux.Unlock()
 
 			packet := &ReplyContactList{contactListReply}
 			wrapperMsg := &WrapperMessage_ReplyContactList{packet}
 			wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}			
+			break
 
 		case "RequestData":
 			if data, ok := network.node.data[*NewKademliaID(message.GetRequestData().Key)]; ok {
@@ -194,27 +211,33 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 				wrapper = &WrapperMessage{"ReplyData", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 
 			} else {
+				network.rtMux.Lock()
 				contactListReply := network.getClosestContacts(message.GetRequestData().GetKey())
+				network.rtMux.Unlock()
 
 				packet := &ReplyContactList{contactListReply}
 				wrapperMsg := &WrapperMessage_ReplyContactList{packet}
 				wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 			}
+			break
 
 		case "RequestStore":
-			network.node.Store(*NewKademliaID(message.GetRequestStore().GetKey()), message.GetRequestStore().GetData())
+			haveFile := network.node.Store(*NewKademliaID(message.GetRequestStore().GetKey()), message.GetRequestStore().GetData())
+			if(!haveFile) {
+				network.fileNetwork.downloadFile(NewKademliaID(message.GetRequestStore().GetKey()), sourceAddress.String())
+			}
 
 			packet := &ReplyStore{"ok"}
 			wrapperMsg := &WrapperMessage_ReplyStore{packet}
 			wrapper = &WrapperMessage{"ReplyStore", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
+			break
 
 		default:
 			fmt.Println("Not a valid Request ID. ID: " + message.ID)
 			return
 
 	}
-
-	network.node.rt.AddContact(NewContact(NewKademliaID(message.SourceID), sourceAddress.String()))
+	go network.updateRoutingTable(message.SourceID, sourceAddress.String())
 	network.sendPacket(network.marshalHelper(wrapper), sourceAddress)
 }
 
@@ -272,4 +295,44 @@ func (network *Network) sendPacket(data []byte, targetAddress *net.UDPAddr) {
 	}
 }
 
+func (network *Network) updateRoutingTable(contactID string, contactAddress string) {
+	contact := NewContact(NewKademliaID(contactID), contactAddress)
+	network.rtMux.Lock()
+	network.node.rt.AddContactNetwork(contact, network)
+	network.rtMux.Unlock()
+}
+
+func (network *Network) RepublishData() {
+	time.Sleep(time.Duration(10) * time.Second)
+	//fmt.Println("Republish Check")
+	for dataEntryID, dataValue := range network.node.data {
+		if(time.Now().After(network.node.dataRepublishTime[dataEntryID])) {
+			kademlia := NewKademlia(network)
+			contactList, _ := kademlia.LookupContact(&dataEntryID, false)
+			delete(network.node.data, dataEntryID)
+			delete(network.node.dataRepublishTime, dataEntryID)
+			i := 0
+			for k := range contactList {
+				i++
+				if(contactList[k] == network.node.rt.me) {
+					network.node.Store(dataEntryID, dataValue)
+				} else {
+					fmt.Println("Sent Republish")
+					returnChannel := make(chan interface{})
+					go network.SendStoreMessage(dataEntryID.String(), dataValue, contactList[k].Address, returnChannel)
+					returnValue:= <-returnChannel
+					switch returnValue := returnValue.(type) {
+						case string:
+							fmt.Println("Store " + strconv.Itoa(i) + " Reply: " + returnValue)
+						case bool:
+							fmt.Println("Store request timeout")
+						default:
+							fmt.Println("Something went wrong")
+					}
+				}
+			}
+		}
+	}
+	network.RepublishData()
+}
 

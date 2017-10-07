@@ -2,6 +2,7 @@ package main
 
 import (
 	"container/list"
+	"fmt"
 )
 
 type bucket struct {
@@ -26,10 +27,44 @@ func (bucket *bucket) AddContact(contact Contact) {
 
 	if element == nil {
 		if bucket.list.Len() < bucketSize {
-			bucket.list.PushFront(contact)
+			bucket.list.PushBack(contact)
 		}
 	} else {
-		bucket.list.MoveToFront(element)
+		bucket.list.MoveToBack(element)
+	}
+}
+
+func (bucket *bucket) AddContactNetwork(contact Contact, network *Network) {
+	var element *list.Element
+	for e := bucket.list.Front(); e != nil; e = e.Next() {
+		nodeID := e.Value.(Contact).ID
+
+		if (contact).ID.Equals(nodeID) {
+			element = e
+		}
+	}
+
+	if element == nil {
+		if bucket.list.Len() < bucketSize {
+			bucket.list.PushBack(contact)
+		} else {
+			fmt.Println("Full bucket. Pinging")
+			answerChannel := make(chan interface{})
+			network.SendPingMessage(bucket.list.Remove(bucket.list.Front()).(Contact), answerChannel)
+			select {
+				case pingAnswer := <-answerChannel:
+					switch pingAnswer := pingAnswer.(type) {
+						case Contact:
+							bucket.list.PushBack(pingAnswer)
+
+						case bool:
+							bucket.list.Remove(bucket.list.Front())
+							bucket.list.PushBack(contact)
+					}
+			}
+		}
+	} else {
+		bucket.list.MoveToBack(element)
 	}
 }
 
