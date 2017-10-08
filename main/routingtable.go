@@ -19,9 +19,11 @@ func NewRoutingTable(me Contact) *RoutingTable {
 }
 
 func (routingTable *RoutingTable) AddContact(contact Contact) {
-	bucketIndex := routingTable.getBucketIndex(contact.ID)
-	bucket := routingTable.buckets[bucketIndex]
-	bucket.AddContact(contact)
+	if(contact.ID != routingTable.me.ID) {
+		bucketIndex := routingTable.getBucketIndex(contact.ID)
+		bucket := routingTable.buckets[bucketIndex]
+		bucket.AddContact(contact)
+	}
 }
 
 func (routingTable *RoutingTable) AddContactNetwork(contact Contact, network *Network) {
