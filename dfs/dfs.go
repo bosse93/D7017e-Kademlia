@@ -14,6 +14,9 @@ import (
 	"net/http"
 	"strings"
 	"bytes"
+	"io/ioutil"
+	"log"
+	"time"
 )
 //FRONTEND CLI
 
@@ -40,8 +43,13 @@ func connect(m string){
 		_, err = bufio.NewReader(conn).Read(p)
 		if err == nil {
 			n := bytes.IndexByte(p, 0)
-			url := string(p[:n])
-			downloadFile(split[1], url)
+			fmt.Println("file downloaded " + string(p[:n]))
+			time.Sleep(1000 * time.Millisecond)
+			dat, err := ioutil.ReadFile(string(p[:n]))
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("file content: " + string(dat))
 		} else {
 			fmt.Printf("Some error %v\n", err)
 		}
@@ -70,10 +78,10 @@ func main() {
     {
       Name:    "store",
       Aliases: []string{"s", "Store", "S"},
-      Usage:   "Store key value",
+      Usage:   "Store file",
       Action: func(c *cli.Context) error {
 		  if c.NArg() > 0 {
-			  m := "store " + c.Args().Get(0) + " " + c.Args().Get(1)
+			  m := "store " + c.Args().Get(0)
 			  //store c.Args().First()
 			  fmt.Println("Sending server request")
 			  connect(m)

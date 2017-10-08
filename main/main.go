@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"io"
 	"log"
+	//"io/ioutil"
+	"bytes"
 )
 
 func main() {
@@ -62,21 +64,21 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
 		newKad := HashKademliaID(args[1])
-		kademlia.Store(newKad.String())
+		upload(network.node.rt.me.ID.String(), args[1])
+		kademlia.Store(args[1])
 		_,storeErr := conn.WriteToUDP([]byte("stored: "+newKad.String()), addr)
 		if storeErr != nil {
 			fmt.Println("something went shit in store: %v", storeErr)
 		}
 
 	} else if args[0]=="cat" {
-		/*
 		kademlia := NewKademlia(network)
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
-		newKad := HashKademliaID(args[1])
-		data, success := kademlia.LookupData(newKad.String())
+		//newKad := HashKademliaID(args[1])
+		success := kademlia.LookupData(args[1])
 		if success {
-			_,err := conn.WriteToUDP([]byte(data), addr)
+			_,err := conn.WriteToUDP([]byte("downloads/" + network.node.rt.me.ID.String() + "/" + args[1]), addr)
 			if err != nil {
 				fmt.Println("something went shit in lookup: %v", err)
 			}
@@ -86,16 +88,13 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 				fmt.Println("something went shit in lookup: %v", err)
 			}
 		}
-		*/
 
 	}
 
 }
 
 func CreateNodes(amount int) (firstNetwork *Network){
-	
 
-	
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 	node := NewNode(firstNodeRT)
@@ -105,22 +104,17 @@ func CreateNodes(amount int) (firstNetwork *Network){
 	//lastNode := firstNode
 	//create 100 nodes
 	if _, err := os.Stat("kademliastorage/" + firstNode.ID.String()); os.IsNotExist(err) {
-			os.Mkdir("kademliastorage/" + firstNode.ID.String(), 0755)
+			os.Mkdir("kademliastorage/" + firstNode.ID.String(), 0777)
 	}
 
 	if _, err := os.Stat("upload/" + firstNode.ID.String()); os.IsNotExist(err) {
-			os.Mkdir("upload/" + firstNode.ID.String(), 0755)
+			os.Mkdir("upload/" + firstNode.ID.String(), 0777)
 	}
 
-	fileDst, _ := os.Create("upload/" + firstNode.ID.String() + "/workshop.jpeg")
-	fileSrc, _ := os.Open("workshop.jpeg")
 
-	if _, err := io.Copy(fileDst, fileSrc); err != nil {
-		log.Fatal(err)
-	}
 
 	if _, err := os.Stat("downloads/" + firstNode.ID.String()); os.IsNotExist(err) {
-		os.Mkdir("downloads/" + firstNode.ID.String(), 0755)
+		os.Mkdir("downloads/" + firstNode.ID.String(), 0777)
 	}
 	
 
@@ -148,15 +142,15 @@ func CreateNodes(amount int) (firstNetwork *Network){
 		}
 		
 		if _, err := os.Stat("kademliastorage/" + ID.String()); os.IsNotExist(err) {
-			os.Mkdir("kademliastorage/" + ID.String(), 0755)
+			os.Mkdir("kademliastorage/" + ID.String(), 0777)
 		}
 
 		if _, err := os.Stat("upload/" + ID.String()); os.IsNotExist(err) {
-			os.Mkdir("upload/" + ID.String(), 0755)
+			os.Mkdir("upload/" + ID.String(), 0777)
 		}
 
 		if _, err := os.Stat("downloads/" + ID.String()); os.IsNotExist(err) {
-			os.Mkdir("downloads/" + ID.String(), 0755)
+			os.Mkdir("downloads/" + ID.String(), 0777)
 		}
 		
 	}
@@ -177,7 +171,8 @@ func StartFrontend(lastNetwork *Network){
 	for {
 		p := make([]byte, 2048)
 		_,remoteaddr,err := ser.ReadFromUDP(p)
-		split := strings.Split(string(p), " ")
+		n := bytes.IndexByte(p, 0)
+		split := strings.Split(string(p[:n]), " ")
 		fmt.Printf("Read a message from %v %s \n", remoteaddr, p)
 		fmt.Println(split)
 		if split[0] == "cat"{
@@ -197,42 +192,41 @@ func StartFrontend(lastNetwork *Network){
 
 func StartNetwork() {
 	if _, err := os.Stat("kademliastorage/"); os.IsNotExist(err) {
-		os.Mkdir("kademliastorage", 0755)
+		os.Mkdir("kademliastorage", 0777)
 	} else {
 		os.RemoveAll("kademliastorage")
 		time.Sleep(500 * time.Millisecond)
-		os.Mkdir("kademliastorage", 0755)
+		os.Mkdir("kademliastorage", 0777)
 	}
 
 	if _, err := os.Stat("upload/"); os.IsNotExist(err) {
-		os.Mkdir("upload", 0755)
+		os.Mkdir("upload", 0777)
 	} else {
 		os.RemoveAll("upload")
 		time.Sleep(500 * time.Millisecond)
-		os.Mkdir("upload", 0755)
+		os.Mkdir("upload", 0777)
 	}
 	
 	if _, err := os.Stat("downloads/"); os.IsNotExist(err) {
-		os.Mkdir("downloads", 0755)
-	} 
-
-
+		os.Mkdir("downloads", 0777)
+	}
+	//file, err := os.Open("testStore.txt")
 	//Creates x amount of nodes in a network
 	firstNetwork := CreateNodes(10)
 	//defer removeDirectories(directories)
 	//printFirstNodeRT(firstNode, firstNodeRT)
 	//printLastNodeRT(nodeList)
 
-	//testStore := HashKademliaID("workshop.jpeg")
+	//testStore := HashKademliaID("testStore.txt")
 
 	//pwd, _ := os.Getwd()
-	//dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/main/testStore.txt")
-	//dat, err := ioutil.ReadFile("main/testStore.txt")
+	//dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/testStore.txt")
+
 	//check(err)
 
-	kademlia := NewKademlia(firstNetwork)
+	/*kademlia := NewKademlia(firstNetwork)
 	//store link to workshop jpg
-	fileName := "workshop.jpeg"
+	fileName := "testStore.txt"
 
 	kademlia.Store(fileName)
 	time.Sleep(3*time.Second)
@@ -244,11 +238,11 @@ func StartNetwork() {
 		fmt.Println("Data found and downloaded")
 	} else {
 		fmt.Println("Data not found")
-	}
+	}*/
 
 	//Setup Frontend
 
-	//downloadFile("workshop.jpeg", "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
+	//downloadFile("testStore.txt", "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
 	StartFrontend(firstNetwork)
 
 
@@ -310,4 +304,24 @@ func downloadFile(filepath string, url string) (err error) {
 	}
 
 	return nil
+}
+
+func upload(id string, file string)  {
+	fileDst, dstErr := os.Create("upload/" + id + "/" + file)
+	if dstErr != nil {
+		log.Fatal(dstErr)
+	} else {
+		fmt.Println(fileDst)
+	}
+	fileSrc, fileErr := os.Open(file)
+	if fileErr != nil {
+		log.Fatal(fileErr)
+	} else {
+		fmt.Println("fileSrc ok")
+	}
+	if _, err := io.Copy(fileDst, fileSrc); err != nil {
+		log.Fatal(err)
+	} else {
+		fmt.Println("fileDst ok")
+	}
 }

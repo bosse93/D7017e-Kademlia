@@ -161,7 +161,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 	}
 }
 
-func (kademlia *Kademlia) LookupData(fileName string) bool {
+func (kademlia *Kademlia) LookupData(fileName string) (bool) {
 	fileNameHash := HashKademliaID(fileName)
 
 	//KIKA OM DATAN REDAN FINNS I STORAGE
