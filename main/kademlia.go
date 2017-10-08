@@ -7,6 +7,9 @@ import (
 	//"strconv"
 	"fmt"
 	"strconv"
+	"os"
+	"io"
+	"log"
 )
 
 type Kademlia struct {
@@ -124,6 +127,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 						}
 
 					case string:
+						fmt.Println(networkAnswer)
 						returnContact = []Contact{}
 						dataReturn = networkAnswer
 						return  
@@ -157,33 +161,50 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 	}
 }
 
-func (kademlia *Kademlia) LookupData(hash string) (returnData string, success bool) {
-	contacts, data := kademlia.LookupContact(NewKademliaID(hash), true)
+func (kademlia *Kademlia) LookupData(fileName string) bool {
+	fileNameHash := HashKademliaID(fileName)
+
+	//KIKA OM DATAN REDAN FINNS I STORAGE
+
+	contacts, data := kademlia.LookupContact(fileNameHash, true)
 	if(len(contacts) == 0) {
 		fmt.Println("LookupData found data")
-		returnData = data
-		success = true
-		return
+		go kademlia.network.fileNetwork.downloadFile(fileNameHash, data, true)
+		return true
 	} else {
-		success = false
 		fmt.Println("LookupData did not find data")
-		return
+		return false
 	}
 }
 
-func (kademlia *Kademlia) Store(key *KademliaID, data string) {
-	contacts, _ := kademlia.LookupContact(key, false)
+func (kademlia *Kademlia) Store(fileName string) {
+	fileNameHash := HashKademliaID(fileName)
+	contacts, _ := kademlia.LookupContact(fileNameHash, false)
 	for i := 0 ; i < len(contacts); i++ {
-		returnChannel := make(chan interface{})
-		go kademlia.network.SendStoreMessage(key.String(), data, contacts[i].Address, returnChannel)
-		returnValue:= <-returnChannel
-		switch returnValue := returnValue.(type) {
-			case string:
-				fmt.Println("Store " + strconv.Itoa(i) + " Reply: " + returnValue)
-			case bool:
-				fmt.Println("Store request timeout")
-			default:
-				fmt.Println("Something went wrong")
+		if(contacts[i].ID.String() != kademlia.rt.me.ID.String()) {
+			go kademlia.sendStoreAndWaitForAnswer(fileNameHash.String(), contacts[i].Address, i)
+		} else {
+			fileDst, _ := os.Create("kademliastorage/" + kademlia.rt.me.ID.String() + "/" + fileNameHash.String())
+			fileSrc, _ := os.Open("upload/" + kademlia.rt.me.ID.String() + "/" + fileName)
+
+			if _, err := io.Copy(fileDst, fileSrc); err != nil {
+				log.Fatal(err)
+			}
+			kademlia.network.node.Store(*fileNameHash, time.Now())
 		}
+	}
+}
+
+func (kademlia *Kademlia) sendStoreAndWaitForAnswer(fileName string, address string, number int) {
+	returnChannel := make(chan interface{})
+	go kademlia.network.SendStoreMessage(fileName, address, returnChannel)
+	returnValue:= <-returnChannel
+	switch returnValue := returnValue.(type) {
+		case string:
+			fmt.Println("Store " + strconv.Itoa(number) + " Reply: " + returnValue)
+		case bool:
+			fmt.Println("Store request timeout")
+		default:
+			fmt.Println("Something went wrong")
 	}
 }

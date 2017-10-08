@@ -18,6 +18,7 @@ type Network struct {
 	rtMux *sync.Mutex
 	timeoutTime int
 	fileNetwork *FileNetwork
+	republishSleepTimeSeconds int 
 }
 
 func NewNetwork(node *Node, fileNetwork *FileNetwork, ip string, port int) *Network {
@@ -28,6 +29,7 @@ func NewNetwork(node *Node, fileNetwork *FileNetwork, ip string, port int) *Netw
 	network.rtMux = &sync.Mutex{}
 	network.timeoutTime = 5
 	network.fileNetwork = fileNetwork
+	network.republishSleepTimeSeconds = 10
 
 	// ESTABLISH UDP CONNECTION
 	serverAddr, err := net.ResolveUDPAddr("udp", ip + ":" + strconv.Itoa(port))
@@ -110,10 +112,11 @@ func (network *Network) SendFindDataMessage(hash string, contact *Contact, retur
 	go network.TimeoutWaiter(network.timeoutTime, returnChannel, messageID)
 }
 
-func (network *Network) SendStoreMessage(hash string, data string, address string, returnChannel chan interface{}) {
+func (network *Network) SendStoreMessage(hash string, address string, returnChannel chan interface{}) {
 	messageID := NewRandomKademliaID()
 	remoteAddr, err := net.ResolveUDPAddr("udp", address)
 	CheckError(err)
+	data := "PLS_REMOVE_ME"
 
 	packet := &RequestStore{hash, data}  //EDIT ME
 	wrapperMsg := &WrapperMessage_RequestStore{packet}
@@ -155,7 +158,7 @@ func (network *Network) HandleReply(message *WrapperMessage, replyErr error, sou
 			break
 
 		case "ReplyData":
-			answerChannel <- message.GetReplyData().GetData()
+			answerChannel <- sourceAddress.String()
 			break
 
 		case "ReplyStore":
@@ -200,15 +203,9 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 
 
 		case "RequestData":
-			if data, ok := network.node.data[*NewKademliaID(message.GetRequestData().Key)]; ok {
-				/*
-				fmt.Println("data found")
-				packet.ReturnType = "data"
-				reply := &Reply{message.GetM3().Key, val}
-				dataPacket := &ReplyData_ReplyData{reply}
-				packet.Msg = dataPacket
-				*/
-				packet := &ReplyData{data}
+			haveData := network.node.gotData(*NewKademliaID(message.GetRequestData().GetKey()))
+			if(haveData) {		
+				packet := &ReplyData{"PLSREMOVEME"}
 				wrapperMsg := &WrapperMessage_ReplyData{packet}
 				wrapper = &WrapperMessage{"ReplyData", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 
@@ -221,12 +218,17 @@ func (network *Network) HandleRequest(message *WrapperMessage, replyErr error, s
 				wrapperMsg := &WrapperMessage_ReplyContactList{packet}
 				wrapper = &WrapperMessage{"ReplyContactList", network.node.rt.me.ID.String(), message.RequestID, wrapperMsg}
 			}
+			
 			break
 
+
 		case "RequestStore":
-			haveFile := network.node.Store(*NewKademliaID(message.GetRequestStore().GetKey()), message.GetRequestStore().GetData())
+			fileID := *NewKademliaID(message.GetRequestStore().GetKey())
+			haveFile := network.node.gotData(fileID)
 			if(!haveFile) {
-				network.fileNetwork.downloadFile(NewKademliaID(message.GetRequestStore().GetKey()), sourceAddress.String())
+				go network.fileNetwork.downloadFile(&fileID, sourceAddress.String(), false)
+			} else {
+				network.node.Store(fileID, time.Now())
 			}
 
 			packet := &ReplyStore{"ok"}
@@ -305,36 +307,43 @@ func (network *Network) updateRoutingTable(contactID string, contactAddress stri
 }
 
 func (network *Network) RepublishData() {
-	time.Sleep(time.Duration(10) * time.Second)
+	time.Sleep(time.Duration(network.republishSleepTimeSeconds) * time.Second)
 	//fmt.Println("Republish Check")
-	for dataEntryID, dataValue := range network.node.data {
-		if(time.Now().After(network.node.dataRepublishTime[dataEntryID])) {
+	dataMap := network.node.getDataMap()
+	for dataEntryID, timestamp := range dataMap {
+		if(time.Now().After(timestamp)) {
 			kademlia := NewKademlia(network)
 			contactList, _ := kademlia.LookupContact(&dataEntryID, false)
-			delete(network.node.data, dataEntryID)
-			delete(network.node.dataRepublishTime, dataEntryID)
 			i := 0
+
 			for k := range contactList {
 				i++
-				if(contactList[k] == network.node.rt.me) {
-					network.node.Store(dataEntryID, dataValue)
+				if(contactList[k].ID.String() == network.node.rt.me.ID.String()) {
+					network.node.Store(dataEntryID, time.Now())
 				} else {
-					fmt.Println("Sent Republish")
-					returnChannel := make(chan interface{})
-					go network.SendStoreMessage(dataEntryID.String(), dataValue, contactList[k].Address, returnChannel)
-					returnValue:= <-returnChannel
-					switch returnValue := returnValue.(type) {
-						case string:
-							fmt.Println("Store " + strconv.Itoa(i) + " Reply: " + returnValue)
-						case bool:
-							fmt.Println("Store request timeout")
-						default:
-							fmt.Println("Something went wrong")
-					}
+					go network.sendStoreAndWaitForAnswer(dataEntryID.String(), contactList[k].Address, i)
 				}
 			}
+			fmt.Println("Sent Republish")
+		}
+		if(time.Now().After(timestamp.Add(time.Duration(2) * time.Second))) {
+			go network.node.deleteEntry(dataEntryID, network.fileNetwork.mux2)
 		}
 	}
 	network.RepublishData()
 }
 
+func (network *Network) sendStoreAndWaitForAnswer(dataEntryID string, address string, number int) {
+	
+	returnChannel := make(chan interface{})
+	go network.SendStoreMessage(dataEntryID, address, returnChannel)
+	returnValue:= <-returnChannel
+	switch returnValue := returnValue.(type) {
+		case string:
+			fmt.Println("Store " + strconv.Itoa(number) + " Reply: " + returnValue)
+		case bool:
+			fmt.Println("Store request timeout")
+		default:
+			fmt.Println("Something went wrong")
+	}
+}

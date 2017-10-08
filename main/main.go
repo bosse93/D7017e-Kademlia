@@ -11,16 +11,44 @@ import (
 	"os"
 	"net/http"
 	"io"
+	"log"
 )
 
 func main() {
 	StartNetwork()
 }
 
+func decodeHash(hash string) string{
+	byteArray := []byte(hash)
+
+	for i := 0; i < 19; i++ {
+		if((string(byteArray[i*2]) == "0") && (string(byteArray[(i*2)+1]) == "3")) {
+			fileName, _ := hex.DecodeString(string(byteArray[:(i)*2]))
+			return string(fileName)
+		}
+	}
+	return "Error when decoding dataID"
+	/*
+	fmt.Println("DECODER")
+	fmt.Println(hash)
+
+	index := strings.IndexByte(hash, byte("03"))
+	fmt.Println(index)
+	fileName, _ := hex.DecodeString(hash[:index-1])
+	*/
+	//return string(byteArray)
+}
+
 func HashKademliaID(fileName string) *KademliaID{
+	fmt.Println("Fil Namn: " + fileName)
 	f := hex.EncodeToString([]byte(fileName))
+	if(len(f) > 38) {
+		fmt.Println(f)
+		fmt.Println("Name of file can be maximum 19 characters, including file extension.")
+	}
+	f = f + "03"
 	for len(f) < 40 {
-		f = f + "0"
+		f = f + "01"
 	}
 	return NewKademliaID(f)
 }
@@ -34,13 +62,14 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
 		newKad := HashKademliaID(args[1])
-		kademlia.Store(newKad, args[2])
+		kademlia.Store(newKad.String())
 		_,storeErr := conn.WriteToUDP([]byte("stored: "+newKad.String()), addr)
 		if storeErr != nil {
 			fmt.Println("something went shit in store: %v", storeErr)
 		}
 
 	} else if args[0]=="cat" {
+		/*
 		kademlia := NewKademlia(network)
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
@@ -57,20 +86,44 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 				fmt.Println("something went shit in lookup: %v", err)
 			}
 		}
+		*/
 
 	}
 
 }
 
-func CreateNodes(amount int) (lastNetwork *Network, directories []string){
+func CreateNodes(amount int) (firstNetwork *Network){
+	
+
+	
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 	node := NewNode(firstNodeRT)
 	lastTCPNetwork := NewFileNetwork(node, "localhost", 8000)
-	lastNetwork = NewNetwork(node, lastTCPNetwork, "localhost", 8000)
+	firstNetwork = NewNetwork(node, lastTCPNetwork, "localhost", 8000)
 	//nodeList := []*RoutingTable{firstNodeRT}
 	//lastNode := firstNode
 	//create 100 nodes
+	if _, err := os.Stat("kademliastorage/" + firstNode.ID.String()); os.IsNotExist(err) {
+			os.Mkdir("kademliastorage/" + firstNode.ID.String(), 0755)
+	}
+
+	if _, err := os.Stat("upload/" + firstNode.ID.String()); os.IsNotExist(err) {
+			os.Mkdir("upload/" + firstNode.ID.String(), 0755)
+	}
+
+	fileDst, _ := os.Create("upload/" + firstNode.ID.String() + "/workshop.jpeg")
+	fileSrc, _ := os.Open("workshop.jpeg")
+
+	if _, err := io.Copy(fileDst, fileSrc); err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := os.Stat("downloads/" + firstNode.ID.String()); os.IsNotExist(err) {
+		os.Mkdir("downloads/" + firstNode.ID.String(), 0755)
+	}
+	
+
 	for i := 0; i < amount; i++ {
 		port := 8001 + i
 		a := "localhost:" + strconv.Itoa(port)
@@ -93,11 +146,19 @@ func CreateNodes(amount int) (lastNetwork *Network, directories []string){
 				rt.AddContact(contactResult[q])
 			}
 		}
-		lastNetwork = nw
-		if _, err := os.Stat(ID.String()); os.IsNotExist(err) {
-			os.Mkdir(ID.String(), 0755)
+		
+		if _, err := os.Stat("kademliastorage/" + ID.String()); os.IsNotExist(err) {
+			os.Mkdir("kademliastorage/" + ID.String(), 0755)
 		}
-		directories = append(directories, ID.String())
+
+		if _, err := os.Stat("upload/" + ID.String()); os.IsNotExist(err) {
+			os.Mkdir("upload/" + ID.String(), 0755)
+		}
+
+		if _, err := os.Stat("downloads/" + ID.String()); os.IsNotExist(err) {
+			os.Mkdir("downloads/" + ID.String(), 0755)
+		}
+		
 	}
 	return
 }
@@ -135,41 +196,60 @@ func StartFrontend(lastNetwork *Network){
 }
 
 func StartNetwork() {
+	if _, err := os.Stat("kademliastorage/"); os.IsNotExist(err) {
+		os.Mkdir("kademliastorage", 0755)
+	} else {
+		os.RemoveAll("kademliastorage")
+		time.Sleep(500 * time.Millisecond)
+		os.Mkdir("kademliastorage", 0755)
+	}
+
+	if _, err := os.Stat("upload/"); os.IsNotExist(err) {
+		os.Mkdir("upload", 0755)
+	} else {
+		os.RemoveAll("upload")
+		time.Sleep(500 * time.Millisecond)
+		os.Mkdir("upload", 0755)
+	}
+	
+	if _, err := os.Stat("downloads/"); os.IsNotExist(err) {
+		os.Mkdir("downloads", 0755)
+	} 
+
+
 	//Creates x amount of nodes in a network
-	lastNetwork, directories := CreateNodes(10)
-	defer removeDirectories(directories)
+	firstNetwork := CreateNodes(10)
+	//defer removeDirectories(directories)
 	//printFirstNodeRT(firstNode, firstNodeRT)
 	//printLastNodeRT(nodeList)
 
-	testStore := HashKademliaID("workshop.jpeg")
+	//testStore := HashKademliaID("workshop.jpeg")
 
 	//pwd, _ := os.Getwd()
 	//dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/main/testStore.txt")
 	//dat, err := ioutil.ReadFile("main/testStore.txt")
 	//check(err)
 
-	kademlia := NewKademlia(lastNetwork)
+	kademlia := NewKademlia(firstNetwork)
 	//store link to workshop jpg
+	fileName := "workshop.jpeg"
 
-	kademlia.Store(testStore, "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
+	kademlia.Store(fileName)
 	time.Sleep(3*time.Second)
-	//kademlia = NewKademlia(lastNetwork)
+	kademlia = NewKademlia(firstNetwork)
 	//lookup workshop jpg
-	/*
-	data, success := kademlia.LookupData(testStore.String())
+	
+	success := kademlia.LookupData(fileName)
 	if(success) {
-		fmt.Println("Data returned " + data)
+		fmt.Println("Data found and downloaded")
 	} else {
 		fmt.Println("Data not found")
 	}
 
-	//download workshop jpg, to be done in frontend when response with url arrives.
-	downerr := downloadFile("workshop.jpeg", data)
-	check(downerr)*/
 	//Setup Frontend
 
 	//downloadFile("workshop.jpeg", "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
-	StartFrontend(lastNetwork)
+	StartFrontend(firstNetwork)
 
 
 	/*for k1, v := range IDRTList {
