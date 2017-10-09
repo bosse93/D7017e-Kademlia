@@ -55,7 +55,7 @@ func HashKademliaID(fileName string) *KademliaID{
 	return NewKademliaID(f)
 }
 
-func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network){
+func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network, pinned *map[string]bool){
 	//_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
 
 	if args[0]=="store" {
@@ -78,6 +78,8 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 		//newKad := HashKademliaID(args[1])
 		success := kademlia.LookupData(args[1])
 		if success {
+			(*pinned)[args[1]] = false
+			go RemoveFile(60, pinned, args[1])
 			_,err := conn.WriteToUDP([]byte("downloads/" + network.node.rt.me.ID.String() + "/" + args[1]), addr)
 			if err != nil {
 				fmt.Println("something went shit in lookup: %v", err)
@@ -88,7 +90,10 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 				fmt.Println("something went shit in lookup: %v", err)
 			}
 		}
-
+	} else if args[0] == "pin" {
+		(*pinned)[args[1]] = true
+	} else if args[0] == "unpin" {
+		(*pinned)[args[1]] = false
 	}
 
 }
@@ -110,8 +115,6 @@ func CreateNodes(amount int) (firstNetwork *Network){
 	if _, err := os.Stat("upload/" + firstNode.ID.String()); os.IsNotExist(err) {
 			os.Mkdir("upload/" + firstNode.ID.String(), 0777)
 	}
-
-
 
 	if _, err := os.Stat("downloads/" + firstNode.ID.String()); os.IsNotExist(err) {
 		os.Mkdir("downloads/" + firstNode.ID.String(), 0777)
@@ -158,7 +161,7 @@ func CreateNodes(amount int) (firstNetwork *Network){
 }
 
 func StartFrontend(lastNetwork *Network){
-
+	pinned := make(map[string]bool)
 	addr := net.UDPAddr{
 		Port: 1234,
 		IP: net.ParseIP("127.0.0.1"),
@@ -185,8 +188,11 @@ func StartFrontend(lastNetwork *Network){
 			continue
 		}
 		//go sendResponse(ser, remoteaddr)
-		go HandleRequest(ser, remoteaddr, split, lastNetwork)
-
+		go HandleRequest(ser, remoteaddr, split, lastNetwork, &pinned)
+		time.Sleep(100 * time.Millisecond)
+		for key, value := range pinned {
+			fmt.Println("key: " + key + ", value:" + strconv.FormatBool(value))
+		}
 	}
 }
 
@@ -323,5 +329,23 @@ func upload(id string, file string)  {
 		log.Fatal(err)
 	} else {
 		fmt.Println("fileDst ok")
+	}
+	fileSrc.Close()
+}
+
+func RemoveFile(sleepTime int, pinned *map[string]bool, file string) {
+	fmt.Println("removing " + file + " if not pinned")
+	time.Sleep(time.Duration(sleepTime) * time.Second)
+	fmt.Println("timeout in remove file")
+	if _, err := os.Stat("downloads/" + file); !os.IsNotExist(err) {
+		if !(*pinned)[file] {
+			fmt.Println("not pinned")
+			os.Remove("downloads/" + file)
+		} else {
+			fmt.Println("pinned, trying again later")
+			go RemoveFile(sleepTime, pinned, file)
+		}
+	} else {
+		fmt.Println("can't find file to remove")
 	}
 }

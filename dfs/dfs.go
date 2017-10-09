@@ -53,6 +53,10 @@ func connect(m string){
 		} else {
 			fmt.Printf("Some error %v\n", err)
 		}
+	} else if split[0] == "pin" {
+
+	} else if split[0] == "unpin" {
+
 	}
 
 	conn.Close()
@@ -109,8 +113,8 @@ func main() {
       Usage:   "Pins arg0",
       Action: func(c *cli.Context) error {
         if c.NArg() > 0 {
-          //pin c.Args().First()
-
+			m := "pin " + c.Args().Get(0)
+			connect(m)
         }
         return nil
       },
@@ -121,12 +125,21 @@ func main() {
       Usage:   "Unpins arg0",
       Action: func(c *cli.Context) error {
         if c.NArg() > 0 {
-          //unpin c.Args().First()
-
+			m := "unpin " + c.Args().Get(0)
+			connect(m)
         }
         return nil
       },
     },
+	  {
+		  Name:    "start",
+		  Aliases: []string{"Start"},
+		  Usage:   "start network",
+		  Action: func(c *cli.Context) error {
+			  connect("start")
+			  return nil
+		  },
+	  },
   }
 
   sort.Sort(cli.FlagsByName(app.Flags))
