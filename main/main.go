@@ -79,7 +79,7 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 		success := kademlia.LookupData(args[1])
 		if success {
 			(*pinned)[args[1]] = false
-			go RemoveFile(60, pinned, args[1])
+			go RemoveFile(60, pinned, args[1], network.node.rt.me.ID.String())
 			_,err := conn.WriteToUDP([]byte("downloads/" + network.node.rt.me.ID.String() + "/" + args[1]), addr)
 			if err != nil {
 				fmt.Println("something went shit in lookup: %v", err)
@@ -333,17 +333,17 @@ func upload(id string, file string)  {
 	fileSrc.Close()
 }
 
-func RemoveFile(sleepTime int, pinned *map[string]bool, file string) {
-	fmt.Println("removing " + file + " if not pinned")
+func RemoveFile(sleepTime int, pinned *map[string]bool, file string, id string) {
+	fmt.Println("removing " + "downloads/" + id + "/" + file + " if not pinned")
 	time.Sleep(time.Duration(sleepTime) * time.Second)
 	fmt.Println("timeout in remove file")
-	if _, err := os.Stat("downloads/" + file); !os.IsNotExist(err) {
+	if _, err := os.Stat("downloads/" + id + "/" + file); !os.IsNotExist(err) {
 		if !(*pinned)[file] {
 			fmt.Println("not pinned")
-			os.Remove("downloads/" + file)
+			os.Remove("downloads/" + id + "/" + file)
 		} else {
 			fmt.Println("pinned, trying again later")
-			go RemoveFile(sleepTime, pinned, file)
+			go RemoveFile(sleepTime, pinned, file, id)
 		}
 	} else {
 		fmt.Println("can't find file to remove")
