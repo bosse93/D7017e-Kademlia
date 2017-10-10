@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"bufio"
 	"time"
+	"sync"
+	"strings"
+	"bytes"
 )
 
 var network *Network
@@ -56,6 +59,8 @@ func TestStartFrontend(t *testing.T) {
 func TestHandleRequest(t *testing.T) {
 
 	p := make([]byte, 2048)
+	var mutex = &sync.Mutex{}
+	pinned := make(map[string]bool)
 	addr := net.UDPAddr{
 		Port: 1234,
 		IP: net.ParseIP("127.0.0.1"),
@@ -68,13 +73,13 @@ func TestHandleRequest(t *testing.T) {
 
 	_,remoteaddr,err := ser.ReadFromUDP(p)
 	fmt.Printf("Read a message from %v %s \n", remoteaddr, p)
-	fmt.Println(p)
-	fmt.Println(string(p))
+	n := bytes.IndexByte(p, 0)
+	split := strings.Split(string(p[:n]), " ")
 	if err !=  nil {
 		fmt.Printf("Some error  %v", err)
 	}
 	//go sendResponse(ser, remoteaddr)
-	go HandleRequest(ser, remoteaddr, string(p), network)
+	go HandleRequest(ser, remoteaddr, split, network, &pinned, mutex)
 	time.Sleep(3*time.Second)
 	//connect("Store", "hej")
 }

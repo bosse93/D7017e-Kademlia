@@ -14,9 +14,6 @@ import (
 	"net/http"
 	"strings"
 	"bytes"
-	"io/ioutil"
-	"log"
-	"time"
 )
 //FRONTEND CLI
 
@@ -25,7 +22,6 @@ import (
 func connect(m string){
 	p :=  make([]byte, 2048)
 	split := strings.Split(m, " ")
-	fmt.Println("message " + m)
 	conn, err := net.Dial("udp", "127.0.0.1:1234")
 	if err != nil {
 		fmt.Printf("Some error %v", err)
@@ -43,13 +39,12 @@ func connect(m string){
 		_, err = bufio.NewReader(conn).Read(p)
 		if err == nil {
 			n := bytes.IndexByte(p, 0)
-			fmt.Println("file downloaded " + string(p[:n]))
-			time.Sleep(1000 * time.Millisecond)
-			dat, err := ioutil.ReadFile(string(p[:n]))
+			/*dat, err := ioutil.ReadFile(string(p[:n]))
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("file content: " + string(dat))
+			fmt.Println("file content: " + string(dat))*/
+			fmt.Println("file content: " + string(p[:n]))
 		} else {
 			fmt.Printf("Some error %v\n", err)
 		}
@@ -87,7 +82,6 @@ func main() {
 		  if c.NArg() > 0 {
 			  m := "store " + c.Args().Get(0)
 			  //store c.Args().First()
-			  fmt.Println("Sending server request")
 			  connect(m)
 		  }
         return nil
@@ -101,7 +95,6 @@ func main() {
 		  if c.NArg() > 0 {
 			  m := "cat " + c.Args().Get(0)
 			  //store c.Args().First()
-			  fmt.Println("Sending server request")
 			  connect(m)
 		  }
 		  return nil

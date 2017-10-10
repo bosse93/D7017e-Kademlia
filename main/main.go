@@ -12,8 +12,9 @@ import (
 	"net/http"
 	"io"
 	"log"
-	//"io/ioutil"
 	"bytes"
+	"sync"
+	"io/ioutil"
 )
 
 func main() {
@@ -55,7 +56,7 @@ func HashKademliaID(fileName string) *KademliaID{
 	return NewKademliaID(f)
 }
 
-func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network, pinned *map[string]bool){
+func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network, pinned *map[string]bool, mux *sync.Mutex){
 	//_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
 
 	if args[0]=="store" {
@@ -78,9 +79,17 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 		//newKad := HashKademliaID(args[1])
 		success := kademlia.LookupData(args[1])
 		if success {
+			mux.Lock()
 			(*pinned)[args[1]] = false
-			go RemoveFile(60, pinned, args[1], network.node.rt.me.ID.String())
-			_,err := conn.WriteToUDP([]byte("downloads/" + network.node.rt.me.ID.String() + "/" + args[1]), addr)
+			mux.Unlock()
+			go RemoveFile(20, pinned, args[1], network.node.rt.me.ID.String(), mux)
+			time.Sleep(1000 * time.Millisecond)
+			dat, readerr := ioutil.ReadFile("downloads/" + network.node.rt.me.ID.String() + "/" + args[1])
+			if readerr != nil {
+				log.Fatal(readerr)
+			}
+			fmt.Println("file content: " + string(dat))
+			_,err := conn.WriteToUDP([]byte(dat), addr)
 			if err != nil {
 				fmt.Println("something went shit in lookup: %v", err)
 			}
@@ -161,6 +170,7 @@ func CreateNodes(amount int) (firstNetwork *Network){
 }
 
 func StartFrontend(lastNetwork *Network){
+	var mutex = &sync.Mutex{}
 	pinned := make(map[string]bool)
 	addr := net.UDPAddr{
 		Port: 1234,
@@ -188,7 +198,7 @@ func StartFrontend(lastNetwork *Network){
 			continue
 		}
 		//go sendResponse(ser, remoteaddr)
-		go HandleRequest(ser, remoteaddr, split, lastNetwork, &pinned)
+		go HandleRequest(ser, remoteaddr, split, lastNetwork, &pinned, mutex)
 		time.Sleep(100 * time.Millisecond)
 		for key, value := range pinned {
 			fmt.Println("key: " + key + ", value:" + strconv.FormatBool(value))
@@ -333,19 +343,21 @@ func upload(id string, file string)  {
 	fileSrc.Close()
 }
 
-func RemoveFile(sleepTime int, pinned *map[string]bool, file string, id string) {
+func RemoveFile(sleepTime int, pinned *map[string]bool, file string, id string, mux *sync.Mutex) {
 	fmt.Println("removing " + "downloads/" + id + "/" + file + " if not pinned")
 	time.Sleep(time.Duration(sleepTime) * time.Second)
 	fmt.Println("timeout in remove file")
+	mux.Lock()
 	if _, err := os.Stat("downloads/" + id + "/" + file); !os.IsNotExist(err) {
 		if !(*pinned)[file] {
 			fmt.Println("not pinned")
 			os.Remove("downloads/" + id + "/" + file)
 		} else {
 			fmt.Println("pinned, trying again later")
-			go RemoveFile(sleepTime, pinned, file, id)
+			go RemoveFile(sleepTime, pinned, file, id, mux)
 		}
 	} else {
 		fmt.Println("can't find file to remove")
 	}
+	mux.Unlock()
 }
