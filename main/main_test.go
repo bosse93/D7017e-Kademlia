@@ -5,13 +5,10 @@ import (
 	"net"
 	"fmt"
 	"bufio"
-	"time"
-	"sync"
-	"strings"
-	"bytes"
 )
 
-var network *Network
+var network *Network = CreateNodes(10)
+
 
 func connect(Usage string, arg0 string){
 	p :=  make([]byte, 2048)
@@ -41,22 +38,13 @@ func TestHashKademliaID(t *testing.T) {
 	HashKademliaID("testar")
 }
 
-func TestCreateNodes(t *testing.T) {
-	//CreateNodes(10)
-	network = CreateNodes(10)
-}
 
 /* TODO - GÖR FRONTEND ANROPET AUTOMAGISKT från funktionen, dvs samma sak som dfs store gör */
-//oklart hur detta blir, körde en dfs store från front och fick 100%
-func TestStartFrontend(t *testing.T) {
-	go StartFrontend(network)
-	time.Sleep(3*time.Second)
-	connect("Store", "hej")
-}
+
 
 
 //oklart hur detta blir, körde en dfs store från front och fick 100%
-func TestHandleRequest(t *testing.T) {
+/*func TestHandleRequest(t *testing.T) {
 
 	p := make([]byte, 2048)
 	var mutex = &sync.Mutex{}
@@ -93,4 +81,4 @@ func TestStartNetwork(t *testing.T) {
 func TestNewKademlia(t *testing.T) {
 	x := NewKademlia(network)
 	x = x
-}
+}*/
