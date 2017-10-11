@@ -3,11 +3,10 @@ package main
 import (
 	"testing"
 	"net"
+	"D7024e-Kademlia/github.com/protobuf/proto"
 )
 
-func TestNetwork_SendPingMessage(t *testing.T) {
 
-}
 
 func TestNetwork_HandleReplyPing(t *testing.T) {
 	id := NewKademliaID("ffffffff00000000000000000000000000000000")
@@ -126,14 +125,146 @@ func TestNetwork_HandleRequest(t *testing.T) {
 
 }
 
-func TestNetwork_SendFindContactMessage(t *testing.T) {
+func TestNetwork_SendPingMessage(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	channel := make(chan interface{})
+	contact := NewContact(id, "localhost:9000")
+	go network.SendPingMessage(contact, channel)
 
+	x := <- channel
+	reply, ok := x.(bool)
+	if ok {
+		if reply != false {
+			t.Error("Expected false, got ", reply)
+		}
+	} else {
+		t.Error("Expected reply to be of type 'bool'")
+	}
+}
+
+func TestNetwork_SendPingMessage2(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	channel := make(chan interface{})
+	contact := NewContact(id, "localhost:9000")
+	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	CheckError(err)
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err)
+	defer serverConn.Close()
+	buf := make([]byte, 4096)
+
+	go network.SendPingMessage(contact, channel)
+	for {
+		n, _, _ := serverConn.ReadFromUDP(buf)
+		message := &WrapperMessage{}
+		_ = proto.Unmarshal(buf[0:n], message)
+		if (message.ID[0:11] != "RequestPing") {
+			t.Error("Expected message id 'RequestPing', got " + message.ID)
+		}
+		if message.SourceID != network.node.rt.me.ID.String() {
+			t.Error("Expected message source to be " + network.node.rt.me.ID.String() + ", got " + message.SourceID)
+		}
+		return
+	}
+
+}
+
+func TestNetwork_SendFindContactMessage(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	channel := make(chan interface{})
+	contact := NewContact(id, "localhost:9000")
+	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	CheckError(err)
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err)
+	defer serverConn.Close()
+	buf := make([]byte, 4096)
+
+	go network.SendFindContactMessage(id, &contact, channel)
+	for {
+		n, _, _ := serverConn.ReadFromUDP(buf)
+		message := &WrapperMessage{}
+		_ = proto.Unmarshal(buf[0:n], message)
+		if (message.ID[0:14] != "RequestContact") {
+			t.Error("Expected message id 'RequestContact', got " + message.ID)
+		}
+		if message.SourceID != network.node.rt.me.ID.String() {
+			t.Error("Expected message source to be " + network.node.rt.me.ID.String() + ", got " + message.SourceID)
+		}
+		return
+	}
 }
 
 func TestNetwork_SendFindDataMessage(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	channel := make(chan interface{})
+	contact := NewContact(id, "localhost:9000")
+	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	CheckError(err)
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err)
+	defer serverConn.Close()
+	buf := make([]byte, 4096)
 
+	go network.SendFindDataMessage(id.String(), &contact, channel)
+	for {
+		n, _, _ := serverConn.ReadFromUDP(buf)
+		message := &WrapperMessage{}
+		_ = proto.Unmarshal(buf[0:n], message)
+		if (message.ID[0:11] != "RequestData") {
+			t.Error("Expected message id 'RequestData', got " + message.ID)
+		}
+		if message.SourceID != network.node.rt.me.ID.String() {
+			t.Error("Expected message source to be " + network.node.rt.me.ID.String() + ", got " + message.SourceID)
+		}
+		return
+	}
 }
 
 func TestNetwork_SendStoreMessage(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	channel := make(chan interface{})
+	contact := NewContact(id, "localhost:9000")
+	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	CheckError(err)
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err)
+	defer serverConn.Close()
+	buf := make([]byte, 4096)
 
+	go network.SendStoreMessage(id.String(), contact.Address, channel)
+	for {
+		n, _, _ := serverConn.ReadFromUDP(buf)
+		message := &WrapperMessage{}
+		_ = proto.Unmarshal(buf[0:n], message)
+		if (message.ID[0:12] != "RequestStore") {
+			t.Error("Expected message id 'RequestStore', got " + message.ID)
+		}
+		if message.SourceID != network.node.rt.me.ID.String() {
+			t.Error("Expected message source to be " + network.node.rt.me.ID.String() + ", got " + message.SourceID)
+		}
+		return
+	}
+}
+
+func TestNetwork_TimeoutWaiter(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	channel := make(chan interface{})
+	network.createChannel(id, channel)
+	returnChannel := make(chan interface{})
+
+	go network.TimeoutWaiter(0, returnChannel, id)
+
+	x := <- returnChannel
+	reply, ok := x.(bool)
+	if ok {
+		if reply != false {
+			t.Error("Expected false, got ", reply)
+		}
+		if network.waitingAnswerList[*id] != nil {
+			t.Error("Expected network.waitingAnswerList[*id] to be nil")
+		}
+	} else {
+		t.Error("Expected reply to be of type 'bool'")
+	}
 }
