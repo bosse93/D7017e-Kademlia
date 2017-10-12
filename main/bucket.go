@@ -16,7 +16,7 @@ func newBucket() *bucket {
 	return bucket
 }
 
-// AddContact adds contact to to the end of bucket. 
+// AddContact adds contact to to the end of bucket.
 func (bucket *bucket) AddContact(contact Contact) {
 	var element *list.Element
 	for e := bucket.list.Front(); e != nil; e = e.Next() {

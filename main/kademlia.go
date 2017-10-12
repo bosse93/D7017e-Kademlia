@@ -14,7 +14,7 @@ import (
 
 type Kademlia struct {
 	// closest contains closest contacts found so far.
-	closest                       ContactCandidates
+	closest ContactCandidates
 	// asked contains true if id already been asked.
 	asked                         map[KademliaID]bool
 	rt                            *RoutingTable
@@ -22,10 +22,10 @@ type Kademlia struct {
 	numberOfIdenticalAnswersInRow int
 	threadCount                   int
 	// k number of network requests will be done simultaneously.
-	k                             int
+	k int
 }
 
-// NewKademlia initializes Kademlia object. 
+// NewKademlia initializes Kademlia object.
 // Sets k value to the desired amount of simultaneously network requests.
 func NewKademlia(nw *Network) *Kademlia {
 	kademlia := &Kademlia{}
@@ -102,7 +102,7 @@ func (kademlia *Kademlia) UpdateClosestContacts(networkAnswer []Contact, target 
 	kademlia.closest.contacts = kademlia.closest.GetContacts(numberOfResults)
 }
 
-// LookupContact returns 20 closest contacts to target. 
+// LookupContact returns 20 closest contacts to target.
 // Spawns threads to do requests to Contacts and then handle their resonse.
 // Stops if same answer is recieved multiple times or if áll contacts in closest have been asked.
 // If findData is set to true it will try to find data if it exists on the network.
@@ -180,7 +180,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 
 // LookupData will try to find data with name fileName in network.
 // FileName hash is passed to LookupContact which will locate the data.
-// When/if data is located fileNetwork.DownloadFile will download the file. 
+// When/if data is located fileNetwork.DownloadFile will download the file.
 func (kademlia *Kademlia) LookupData(fileName string) bool {
 	fileNameHash := HashKademliaID(fileName)
 

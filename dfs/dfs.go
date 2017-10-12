@@ -1,26 +1,27 @@
 package main
 
 import (
-  "os"
-  "sort"
-  "D7024e-Kademlia/github.com/urfave/cli"
-  "fmt"
-	"net"
+	"D7024e-Kademlia/github.com/urfave/cli"
 	"bufio"
+	"fmt"
+	"net"
+	"os"
+	"sort"
 	//protoPack "D7024e-Kademlia/proto"
 	//"log"
 	//"D7024e-Kademlia/github.com/protobuf/proto"
+	"bytes"
 	"io"
 	"net/http"
 	"strings"
-	"bytes"
 )
+
 //FRONTEND CLI
 
 //Make request to a node
 
-func connect(m string){
-	p :=  make([]byte, 2048)
+func connect(m string) {
+	p := make([]byte, 2048)
 	split := strings.Split(m, " ")
 	conn, err := net.Dial("udp", "127.0.0.1:1234")
 	if err != nil {
@@ -59,87 +60,88 @@ func connect(m string){
 }
 
 func main() {
-  app := cli.NewApp()
+	app := cli.NewApp()
 
-  app.Flags = []cli.Flag{
-    cli.StringFlag{
-      Name:  "lang, l",
-      Value: "english",
-      Usage: "Language for the greeting",
-    },
-    cli.StringFlag{
-      Name:  "config, c",
-      Usage: "Load configuration from `FILE`",
-    },
-  }
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "lang, l",
+			Value: "english",
+			Usage: "Language for the greeting",
+		},
+		cli.StringFlag{
+			Name:  "config, c",
+			Usage: "Load configuration from `FILE`",
+		},
+	}
 
-  app.Commands = []cli.Command{
-    {
-      Name:    "store",
-      Aliases: []string{"s", "Store", "S"},
-      Usage:   "Store file",
-      Action: func(c *cli.Context) error {
-		  if c.NArg() > 0 {
-			  m := "store " + c.Args().Get(0)
-			  //store c.Args().First()
-			  connect(m)
-		  }
-        return nil
-      },
-    },
-    {
-      Name:    "cat",
-      Aliases: []string{"c"},
-      Usage:   "Prints content of arg0",
-      Action: func(c *cli.Context) error {
-		  if c.NArg() > 0 {
-			  m := "cat " + c.Args().Get(0)
-			  //store c.Args().First()
-			  connect(m)
-		  }
-		  return nil
-      },
-    },
-    {
-      Name:    "pin",
-      Aliases: []string{"p"},
-      Usage:   "Pins arg0",
-      Action: func(c *cli.Context) error {
-        if c.NArg() > 0 {
-			m := "pin " + c.Args().Get(0)
-			connect(m)
-        }
-        return nil
-      },
-    },
-    {
-      Name:    "unpin",
-      Aliases: []string{"u"},
-      Usage:   "Unpins arg0",
-      Action: func(c *cli.Context) error {
-        if c.NArg() > 0 {
-			m := "unpin " + c.Args().Get(0)
-			connect(m)
-        }
-        return nil
-      },
-    },
-	  {
-		  Name:    "start",
-		  Aliases: []string{"Start"},
-		  Usage:   "start network",
-		  Action: func(c *cli.Context) error {
-			  connect("start")
-			  return nil
-		  },
-	  },
-  }
+	app.Commands = []cli.Command{
+		{
+			Name:    "store",
+			Aliases: []string{"s", "Store", "S"},
+			Usage:   "Store file",
+			Action: func(c *cli.Context) error {
+				if c.NArg() > 0 {
+					m := "store " + c.Args().Get(0)
+					//store c.Args().First()
+					connect(m)
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "cat",
+			Aliases: []string{"c"},
+			Usage:   "Prints content of arg0",
+			Action: func(c *cli.Context) error {
+				if c.NArg() > 0 {
+					m := "cat " + c.Args().Get(0)
+					//store c.Args().First()
+					connect(m)
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "pin",
+			Aliases: []string{"p"},
+			Usage:   "Pins arg0",
+			Action: func(c *cli.Context) error {
+				if c.NArg() > 0 {
+					m := "pin " + c.Args().Get(0)
+					connect(m)
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "unpin",
+			Aliases: []string{"u"},
+			Usage:   "Unpins arg0",
+			Action: func(c *cli.Context) error {
+				if c.NArg() > 0 {
+					m := "unpin " + c.Args().Get(0)
+					connect(m)
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "start",
+			Aliases: []string{"Start"},
+			Usage:   "start network",
+			Action: func(c *cli.Context) error {
+				connect("start")
+				return nil
+			},
+		},
+	}
 
-  sort.Sort(cli.FlagsByName(app.Flags))
-  sort.Sort(cli.CommandsByName(app.Commands))
+	sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.CommandsByName(app.Commands))
 
-  app.Run(os.Args)
+	app.Run(os.Args)
 }
+
 /*
 func marshalHelper(wrapper *protoPack.WrapperMessage) []byte{
 	data, err := protoPack.Marshal(wrapper)
@@ -161,7 +163,7 @@ func downloadFile(filepath string, url string) (err error) {
 	fmt.Println("filepath: " + filepath + " url: " + url)
 	// Create the file
 	out, err := os.Create(filepath)
-	if err != nil  {
+	if err != nil {
 		return err
 	}
 	defer out.Close()
@@ -174,7 +176,7 @@ func downloadFile(filepath string, url string) (err error) {
 	defer resp.Body.Close()
 	// Writer the body to file
 	_, err = io.Copy(out, resp.Body)
-	if err != nil  {
+	if err != nil {
 		return err
 	}
 
