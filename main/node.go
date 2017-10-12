@@ -2,25 +2,25 @@ package main
 
 import (
 	//"fmt"
-	"time"
-	"sync"
-	"os"
 	"log"
 	"math/rand"
+	"os"
+	"sync"
+	"time"
 )
 
 type Node struct {
-	data map [KademliaID]time.Time
-	rt *RoutingTable
-	mux *sync.Mutex
-	republishTimeSeconds int
+	data                   map[KademliaID]time.Time
+	rt                     *RoutingTable
+	mux                    *sync.Mutex
+	republishTimeSeconds   int
 	republishRandomSeconds int
 }
 
-func NewNode(rt *RoutingTable) *Node  {
+func NewNode(rt *RoutingTable) *Node {
 	node := &Node{}
 	node.rt = rt
-	node.data = make(map [KademliaID]time.Time)
+	node.data = make(map[KademliaID]time.Time)
 	node.mux = &sync.Mutex{}
 	node.republishTimeSeconds = 15
 	node.republishRandomSeconds = 10
@@ -29,11 +29,13 @@ func NewNode(rt *RoutingTable) *Node  {
 
 func (node *Node) Store(key KademliaID, timeStamp time.Time) {
 	node.mux.Lock()
-	node.data[key] = (timeStamp.Add(time.Duration(node.republishTimeSeconds+ rand.Intn(node.republishRandomSeconds)) * time.Second))
+	node.data[key] = (timeStamp.Add(time.Duration(node.republishTimeSeconds+rand.Intn(node.republishRandomSeconds)) * time.Second))
 	node.mux.Unlock()
 }
 
-func (node *Node) getDataMap() map [KademliaID]time.Time{
+// GetDataMap returns map with data ID and timestamp.
+// This is thread safe by using the mutex lock in node struct.
+func (node *Node) GetDataMap() map[KademliaID]time.Time {
 	node.mux.Lock()
 	defer node.mux.Unlock()
 	return node.data
@@ -51,9 +53,9 @@ func (node *Node) deleteEntry(dataEntryID KademliaID, storageMux *sync.Mutex) {
 	}
 }
 
-func (node *Node) gotData(key KademliaID) bool{
+func (node *Node) gotData(key KademliaID) bool {
 	node.mux.Lock()
-	if _, ok := node.data[key]; ok{
+	if _, ok := node.data[key]; ok {
 		node.mux.Unlock()
 		return true
 	} else {
@@ -61,4 +63,3 @@ func (node *Node) gotData(key KademliaID) bool{
 		return false
 	}
 }
-

@@ -52,15 +52,15 @@ func (bucket *bucket) AddContactNetwork(contact Contact, network *Network) {
 			answerChannel := make(chan interface{})
 			network.SendPingMessage(bucket.list.Remove(bucket.list.Front()).(Contact), answerChannel)
 			select {
-				case pingAnswer := <-answerChannel:
-					switch pingAnswer := pingAnswer.(type) {
-						case Contact:
-							bucket.list.PushBack(pingAnswer)
+			case pingAnswer := <-answerChannel:
+				switch pingAnswer := pingAnswer.(type) {
+				case Contact:
+					bucket.list.PushBack(pingAnswer)
 
-						case bool:
-							bucket.list.Remove(bucket.list.Front())
-							bucket.list.PushBack(contact)
-					}
+				case bool:
+					bucket.list.Remove(bucket.list.Front())
+					bucket.list.PushBack(contact)
+				}
 			}
 		}
 	} else {

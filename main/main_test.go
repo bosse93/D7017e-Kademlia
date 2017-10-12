@@ -1,24 +1,23 @@
 package main
 
 import (
-	"testing"
-	"net"
-	"fmt"
 	"bufio"
+	"fmt"
+	"net"
+	"testing"
 )
 
 var network *Network = CreateNodes(10)
 
-
-func connect(Usage string, arg0 string){
-	p :=  make([]byte, 2048)
+func connect(Usage string, arg0 string) {
+	p := make([]byte, 2048)
 	conn, err := net.Dial("udp", "127.0.0.1:1234")
 	if err != nil {
 		fmt.Printf("Some error %v", err)
 		return
 	}
 
-	fmt.Fprintf(conn, Usage + arg0)
+	fmt.Fprintf(conn, Usage+arg0)
 	_, err = bufio.NewReader(conn).Read(p)
 	if err == nil {
 		fmt.Printf("%s\n", p)
@@ -38,10 +37,7 @@ func TestHashKademliaID(t *testing.T) {
 	HashKademliaID("testar")
 }
 
-
 /* TODO - GÖR FRONTEND ANROPET AUTOMAGISKT från funktionen, dvs samma sak som dfs store gör */
-
-
 
 //oklart hur detta blir, körde en dfs store från front och fick 100%
 /*func TestHandleRequest(t *testing.T) {

@@ -1,7 +1,5 @@
 package main
 
-
-
 const bucketSize = 20
 
 type RoutingTable struct {
@@ -19,7 +17,7 @@ func NewRoutingTable(me Contact) *RoutingTable {
 }
 
 func (routingTable *RoutingTable) AddContact(contact Contact) {
-	if(contact.ID != routingTable.me.ID) {
+	if contact.ID != routingTable.me.ID {
 		bucketIndex := routingTable.getBucketIndex(contact.ID)
 		bucket := routingTable.buckets[bucketIndex]
 		bucket.AddContact(contact)

@@ -17,7 +17,7 @@ func TestKademlia_findNextNodeToAsk(t *testing.T) {
 	// WHEN
 	contact, success := localKademlia.findNextNodeToAsk()
 	// THEN
-	if contact != nil{
+	if contact != nil {
 		t.Error("Expected nil, got ", contact)
 	}
 	if success != false {
@@ -28,7 +28,7 @@ func TestKademlia_findNextNodeToAsk(t *testing.T) {
 	// WHEN
 	contact2, success2 := localKademlia.findNextNodeToAsk()
 	// THEN
-	if contact2.ID != contacts[0].ID{
+	if contact2.ID != contacts[0].ID {
 		t.Error("Expected " + contacts[0].String() + ", got " + contact.String())
 	}
 	if success2 != true {

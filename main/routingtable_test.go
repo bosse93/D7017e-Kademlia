@@ -37,4 +37,3 @@ func TestBucket_Len(t *testing.T) {
 func TestRoutingTable_FindClosestContacts(t *testing.T) {
 	rt.FindClosestContacts(NewKademliaID("FFFFFF5F00000000000000000000000000000000"), 5)
 }
-

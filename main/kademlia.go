@@ -6,20 +6,20 @@ import (
 	"math/rand"
 	//"strconv"
 	"fmt"
-	"strconv"
-	"os"
 	"io"
 	"log"
+	"os"
+	"strconv"
 )
 
 type Kademlia struct {
-	closest ContactCandidates
-	asked map[KademliaID]bool
-	rt *RoutingTable
-	network Network
+	closest                       ContactCandidates
+	asked                         map[KademliaID]bool
+	rt                            *RoutingTable
+	network                       Network
 	numberOfIdenticalAnswersInRow int
-	threadCount int
-	k int
+	threadCount                   int
+	k                             int
 }
 
 func NewKademlia(nw *Network) *Kademlia {
@@ -34,13 +34,15 @@ func NewKademlia(nw *Network) *Kademlia {
 	return kademlia
 }
 
-func (kademlia *Kademlia) findNextNodeToAsk() (nextContact *Contact, success bool) {
+// FindNextNodeToAsk helps the Lookup function to find the next node to ask.
+// This is done by finding a node which haven't been asked yet in the contact candidates map.
+func (kademlia *Kademlia) FindNextNodeToAsk() (nextContact *Contact, success bool) {
 	for i := range kademlia.closest.contacts {
-		if(kademlia.asked[*kademlia.closest.contacts[i].ID] != true) {
+		if kademlia.asked[*kademlia.closest.contacts[i].ID] != true {
 			kademlia.asked[*kademlia.closest.contacts[i].ID] = true
 			nextContact = &kademlia.closest.contacts[i]
 			success = true
-			return 
+			return
 		}
 	}
 	nextContact = nil
@@ -49,11 +51,11 @@ func (kademlia *Kademlia) findNextNodeToAsk() (nextContact *Contact, success boo
 }
 
 func (kademlia *Kademlia) AskNextNode(target *KademliaID, destination *Contact, findData bool, returnChannel chan interface{}) {
-		if(findData) {
-			go kademlia.network.SendFindDataMessage(target.String(), destination, returnChannel)
-		} else {
-			go kademlia.network.SendFindContactMessage(target, destination, returnChannel)
-		}
+	if findData {
+		go kademlia.network.SendFindDataMessage(target.String(), destination, returnChannel)
+	} else {
+		go kademlia.network.SendFindContactMessage(target, destination, returnChannel)
+	}
 }
 
 func (kademlia *Kademlia) updateClosestContacts(networkAnswer []Contact, target *KademliaID) {
@@ -62,18 +64,18 @@ func (kademlia *Kademlia) updateClosestContacts(networkAnswer []Contact, target 
 	for i := range networkAnswer {
 		existsAlready := false
 		for k := range kademlia.closest.contacts {
-			if(networkAnswer[i].ID.String() == kademlia.closest.contacts[k].ID.String()) {	
+			if networkAnswer[i].ID.String() == kademlia.closest.contacts[k].ID.String() {
 				existsAlready = true
 			}
 		}
-		if(!existsAlready) {
+		if !existsAlready {
 			same = false
 			networkAnswer[i].CalcDistance(target)
 			newNodeList = append(newNodeList, networkAnswer[i])
 		}
 	}
 
-	if(same) {
+	if same {
 		kademlia.numberOfIdenticalAnswersInRow++
 	} else {
 		kademlia.numberOfIdenticalAnswersInRow = 0
@@ -83,7 +85,7 @@ func (kademlia *Kademlia) updateClosestContacts(networkAnswer []Contact, target 
 	kademlia.closest.Sort()
 
 	numberOfResults := 20
-	if (len(kademlia.closest.contacts) < 20) {
+	if len(kademlia.closest.contacts) < 20 {
 		numberOfResults = len(kademlia.closest.contacts)
 	}
 	kademlia.closest.contacts = kademlia.closest.GetContacts(numberOfResults)
@@ -94,7 +96,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target, 3))
 
 	returnChannel := make(chan interface{}, 3)
-	
+
 	for i := 0; i < 3 && i < len(kademlia.closest.contacts) && kademlia.threadCount < kademlia.k; i++ {
 		if findData {
 			fmt.Println("New Thread")
@@ -109,65 +111,65 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 	}
 	for {
 		select {
-			case networkAnswer := <-returnChannel:
-				switch networkAnswer := networkAnswer.(type) {
-					case []Contact:
-						kademlia.updateClosestContacts(networkAnswer, target)
-						if(kademlia.numberOfIdenticalAnswersInRow > 2) {
-							returnContact = kademlia.closest.contacts
-							fmt.Println("Same Answer in a row")
-							return 
-						}
-						destination, success := kademlia.findNextNodeToAsk()
-						if(success) {
-							kademlia.AskNextNode(target, destination, findData, returnChannel)
-						} else {
-							fmt.Println("Thread Killed")
-							kademlia.threadCount--
-						}
-
-					case string:
-						fmt.Println(networkAnswer)
-						returnContact = []Contact{}
-						dataReturn = networkAnswer
-						return  
-
-					case bool:
-						fmt.Println("Timeout")
-						destination, success := kademlia.findNextNodeToAsk()
-						if(success) {
-							kademlia.AskNextNode(target, destination, findData, returnChannel)
-						} else {
-							fmt.Println("Thread Killed")
-							kademlia.threadCount--
-						}
-				}
-	
-			default:
-				if(kademlia.threadCount == 0) {
-					fmt.Println("No Threads")
+		case networkAnswer := <-returnChannel:
+			switch networkAnswer := networkAnswer.(type) {
+			case []Contact:
+				kademlia.updateClosestContacts(networkAnswer, target)
+				if kademlia.numberOfIdenticalAnswersInRow > 2 {
 					returnContact = kademlia.closest.contacts
+					fmt.Println("Same Answer in a row")
 					return
 				}
-				if(kademlia.threadCount < kademlia.k) {
-					destination, success := kademlia.findNextNodeToAsk()
-					if(success) {
-						fmt.Println("New Thread")
-						kademlia.threadCount++
-						kademlia.AskNextNode(target, destination, findData, returnChannel)
-					} 
-				}			
+				destination, success := kademlia.FindNextNodeToAsk()
+				if success {
+					kademlia.AskNextNode(target, destination, findData, returnChannel)
+				} else {
+					fmt.Println("Thread Killed")
+					kademlia.threadCount--
+				}
+
+			case string:
+				fmt.Println(networkAnswer)
+				returnContact = []Contact{}
+				dataReturn = networkAnswer
+				return
+
+			case bool:
+				fmt.Println("Timeout")
+				destination, success := kademlia.FindNextNodeToAsk()
+				if success {
+					kademlia.AskNextNode(target, destination, findData, returnChannel)
+				} else {
+					fmt.Println("Thread Killed")
+					kademlia.threadCount--
+				}
+			}
+
+		default:
+			if kademlia.threadCount == 0 {
+				fmt.Println("No Threads")
+				returnContact = kademlia.closest.contacts
+				return
+			}
+			if kademlia.threadCount < kademlia.k {
+				destination, success := kademlia.FindNextNodeToAsk()
+				if success {
+					fmt.Println("New Thread")
+					kademlia.threadCount++
+					kademlia.AskNextNode(target, destination, findData, returnChannel)
+				}
+			}
 		}
 	}
 }
 
-func (kademlia *Kademlia) LookupData(fileName string) (bool) {
+func (kademlia *Kademlia) LookupData(fileName string) bool {
 	fileNameHash := HashKademliaID(fileName)
 
 	//KIKA OM DATAN REDAN FINNS I STORAGE
 
 	contacts, data := kademlia.LookupContact(fileNameHash, true)
-	if(len(contacts) == 0) {
+	if len(contacts) == 0 {
 		fmt.Println("LookupData found data")
 		go kademlia.network.fileNetwork.downloadFile(fileNameHash, data, true)
 		return true
@@ -180,8 +182,8 @@ func (kademlia *Kademlia) LookupData(fileName string) (bool) {
 func (kademlia *Kademlia) Store(fileName string) {
 	fileNameHash := HashKademliaID(fileName)
 	contacts, _ := kademlia.LookupContact(fileNameHash, false)
-	for i := 0 ; i < len(contacts); i++ {
-		if(contacts[i].ID.String() != kademlia.rt.me.ID.String()) {
+	for i := 0; i < len(contacts); i++ {
+		if contacts[i].ID.String() != kademlia.rt.me.ID.String() {
 			go kademlia.sendStoreAndWaitForAnswer(fileNameHash.String(), contacts[i].Address, i)
 		} else {
 			fileDst, _ := os.Create("kademliastorage/" + kademlia.rt.me.ID.String() + "/" + fileNameHash.String())
@@ -198,13 +200,13 @@ func (kademlia *Kademlia) Store(fileName string) {
 func (kademlia *Kademlia) sendStoreAndWaitForAnswer(fileName string, address string, number int) {
 	returnChannel := make(chan interface{})
 	go kademlia.network.SendStoreMessage(fileName, address, returnChannel)
-	returnValue:= <-returnChannel
+	returnValue := <-returnChannel
 	switch returnValue := returnValue.(type) {
-		case string:
-			fmt.Println("Store " + strconv.Itoa(number) + " Reply: " + returnValue)
-		case bool:
-			fmt.Println("Store request timeout")
-		default:
-			fmt.Println("Something went wrong")
+	case string:
+		fmt.Println("Store " + strconv.Itoa(number) + " Reply: " + returnValue)
+	case bool:
+		fmt.Println("Store request timeout")
+	default:
+		fmt.Println("Something went wrong")
 	}
 }

@@ -1,51 +1,51 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
+	"net"
 	"strconv"
 	"time"
-	"net"
-	"encoding/hex"
 	//"io/ioutil"
-	"strings"
-	"os"
-	"net/http"
-	"io"
-	"log"
 	"bytes"
-	"sync"
+	"io"
 	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
 )
 
 func main() {
 	StartNetwork()
 }
 
-func decodeHash(hash string) string{
+func decodeHash(hash string) string {
 	byteArray := []byte(hash)
 
 	for i := 0; i < 19; i++ {
-		if((string(byteArray[i*2]) == "0") && (string(byteArray[(i*2)+1]) == "3")) {
+		if (string(byteArray[i*2]) == "0") && (string(byteArray[(i*2)+1]) == "3") {
 			fileName, _ := hex.DecodeString(string(byteArray[:(i)*2]))
 			return string(fileName)
 		}
 	}
 	return "Error when decoding dataID"
 	/*
-	fmt.Println("DECODER")
-	fmt.Println(hash)
+		fmt.Println("DECODER")
+		fmt.Println(hash)
 
-	index := strings.IndexByte(hash, byte("03"))
-	fmt.Println(index)
-	fileName, _ := hex.DecodeString(hash[:index-1])
+		index := strings.IndexByte(hash, byte("03"))
+		fmt.Println(index)
+		fileName, _ := hex.DecodeString(hash[:index-1])
 	*/
 	//return string(byteArray)
 }
 
-func HashKademliaID(fileName string) *KademliaID{
+func HashKademliaID(fileName string) *KademliaID {
 	fmt.Println("Fil Namn: " + fileName)
 	f := hex.EncodeToString([]byte(fileName))
-	if(len(f) > 38) {
+	if len(f) > 38 {
 		fmt.Println(f)
 		fmt.Println("Name of file can be maximum 19 characters, including file extension.")
 	}
@@ -56,23 +56,23 @@ func HashKademliaID(fileName string) *KademliaID{
 	return NewKademliaID(f)
 }
 
-func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network, pinned *map[string]bool, mux *sync.Mutex){
+func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network, pinned *map[string]bool, mux *sync.Mutex) {
 	//_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
 
-	if args[0]=="store" {
-		fmt.Println("this was a store message with arg "+ args[0])
+	if args[0] == "store" {
+		fmt.Println("this was a store message with arg " + args[0])
 		kademlia := NewKademlia(network)
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
 		newKad := HashKademliaID(args[1])
 		upload(network.node.rt.me.ID.String(), args[1])
 		kademlia.Store(args[1])
-		_,storeErr := conn.WriteToUDP([]byte("stored: "+newKad.String()), addr)
+		_, storeErr := conn.WriteToUDP([]byte("stored: "+newKad.String()), addr)
 		if storeErr != nil {
 			fmt.Println("something went shit in store: %v", storeErr)
 		}
 
-	} else if args[0]=="cat" {
+	} else if args[0] == "cat" {
 		kademlia := NewKademlia(network)
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
@@ -89,12 +89,12 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 				log.Fatal(readerr)
 			}
 			fmt.Println("file content: " + string(dat))
-			_,err := conn.WriteToUDP([]byte(dat), addr)
+			_, err := conn.WriteToUDP([]byte(dat), addr)
 			if err != nil {
 				fmt.Println("something went shit in lookup: %v", err)
 			}
 		} else {
-			_,err := conn.WriteToUDP([]byte("no data found"), addr)
+			_, err := conn.WriteToUDP([]byte("no data found"), addr)
 			if err != nil {
 				fmt.Println("something went shit in lookup: %v", err)
 			}
@@ -107,7 +107,7 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 
 }
 
-func CreateNodes(amount int) (firstNetwork *Network){
+func CreateNodes(amount int) (firstNetwork *Network) {
 
 	firstNode := NewContact(NewRandomKademliaID(), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
@@ -118,17 +118,16 @@ func CreateNodes(amount int) (firstNetwork *Network){
 	//lastNode := firstNode
 	//create 100 nodes
 	if _, err := os.Stat("kademliastorage/" + firstNode.ID.String()); os.IsNotExist(err) {
-			os.Mkdir("kademliastorage/" + firstNode.ID.String(), 0777)
+		os.Mkdir("kademliastorage/"+firstNode.ID.String(), 0777)
 	}
 
 	if _, err := os.Stat("upload/" + firstNode.ID.String()); os.IsNotExist(err) {
-			os.Mkdir("upload/" + firstNode.ID.String(), 0777)
+		os.Mkdir("upload/"+firstNode.ID.String(), 0777)
 	}
 
 	if _, err := os.Stat("downloads/" + firstNode.ID.String()); os.IsNotExist(err) {
-		os.Mkdir("downloads/" + firstNode.ID.String(), 0777)
+		os.Mkdir("downloads/"+firstNode.ID.String(), 0777)
 	}
-	
 
 	for i := 0; i < amount; i++ {
 		port := 8001 + i
@@ -146,35 +145,35 @@ func CreateNodes(amount int) (firstNetwork *Network){
 		time.Sleep(500 * time.Millisecond)
 		kademlia := NewKademlia(nw)
 
-		contactResult, _  := kademlia.LookupContact(ID, false)
-		if(len(contactResult) > 0) {
+		contactResult, _ := kademlia.LookupContact(ID, false)
+		if len(contactResult) > 0 {
 			for q := range contactResult {
 				rt.AddContact(contactResult[q])
 			}
 		}
-		
+
 		if _, err := os.Stat("kademliastorage/" + ID.String()); os.IsNotExist(err) {
-			os.Mkdir("kademliastorage/" + ID.String(), 0777)
+			os.Mkdir("kademliastorage/"+ID.String(), 0777)
 		}
 
 		if _, err := os.Stat("upload/" + ID.String()); os.IsNotExist(err) {
-			os.Mkdir("upload/" + ID.String(), 0777)
+			os.Mkdir("upload/"+ID.String(), 0777)
 		}
 
 		if _, err := os.Stat("downloads/" + ID.String()); os.IsNotExist(err) {
-			os.Mkdir("downloads/" + ID.String(), 0777)
+			os.Mkdir("downloads/"+ID.String(), 0777)
 		}
-		
+
 	}
 	return
 }
 
-func StartFrontend(lastNetwork *Network){
+func StartFrontend(lastNetwork *Network) {
 	var mutex = &sync.Mutex{}
 	pinned := make(map[string]bool)
 	addr := net.UDPAddr{
 		Port: 1234,
-		IP: net.ParseIP("127.0.0.1"),
+		IP:   net.ParseIP("127.0.0.1"),
 	}
 	ser, err := net.ListenUDP("udp", &addr)
 	if err != nil {
@@ -183,17 +182,17 @@ func StartFrontend(lastNetwork *Network){
 	}
 	for {
 		p := make([]byte, 2048)
-		_,remoteaddr,err := ser.ReadFromUDP(p)
+		_, remoteaddr, err := ser.ReadFromUDP(p)
 		n := bytes.IndexByte(p, 0)
 		split := strings.Split(string(p[:n]), " ")
 		fmt.Printf("Read a message from %v %s \n", remoteaddr, p)
 		fmt.Println(split)
-		if split[0] == "cat"{
+		if split[0] == "cat" {
 			fmt.Println("I got cat back do cat stuff")
 		} else if split[0] == "store" {
 			fmt.Println("I got Store back")
 		}
-		if err !=  nil {
+		if err != nil {
 			fmt.Printf("Some error  %v", err)
 			continue
 		}
@@ -222,7 +221,7 @@ func StartNetwork() {
 		time.Sleep(500 * time.Millisecond)
 		os.Mkdir("upload", 0777)
 	}
-	
+
 	if _, err := os.Stat("downloads/"); os.IsNotExist(err) {
 		os.Mkdir("downloads", 0777)
 	}
@@ -248,7 +247,7 @@ func StartNetwork() {
 	time.Sleep(3*time.Second)
 	kademlia = NewKademlia(firstNetwork)
 	//lookup workshop jpg
-	
+
 	success := kademlia.LookupData(fileName)
 	if(success) {
 		fmt.Println("Data found and downloaded")
@@ -261,7 +260,6 @@ func StartNetwork() {
 	//downloadFile("testStore.txt", "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
 	StartFrontend(firstNetwork)
 
-
 	/*for k1, v := range IDRTList {
 		for k2, v2 := range v.node.data {
 			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
@@ -271,11 +269,10 @@ func StartNetwork() {
 }
 func removeDirectories(directories []string) {
 	fmt.Println("in remove")
-	for i := range directories{
+	for i := range directories {
 		os.Remove(directories[i])
 	}
 }
-
 
 func printLastNodeRT(nodeList []*RoutingTable) {
 	lastNode := nodeList[len(nodeList)-1]
@@ -290,8 +287,6 @@ func printLastNodeRT(nodeList []*RoutingTable) {
 	}
 }
 
-
-
 func check(e error) {
 	if e != nil {
 		panic(e)
@@ -302,7 +297,7 @@ func downloadFile(filepath string, url string) (err error) {
 	fmt.Println("filepath: " + filepath + " url: " + url)
 	// Create the file
 	out, err := os.Create(filepath)
-	if err != nil  {
+	if err != nil {
 		return err
 	}
 	defer out.Close()
@@ -315,14 +310,14 @@ func downloadFile(filepath string, url string) (err error) {
 	defer resp.Body.Close()
 	// Writer the body to file
 	_, err = io.Copy(out, resp.Body)
-	if err != nil  {
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func upload(id string, file string)  {
+func upload(id string, file string) {
 	fileDst, dstErr := os.Create("upload/" + id + "/" + file)
 	if dstErr != nil {
 		log.Fatal(dstErr)

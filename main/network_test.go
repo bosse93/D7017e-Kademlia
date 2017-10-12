@@ -1,12 +1,10 @@
 package main
 
 import (
-	"testing"
-	"net"
 	"D7024e-Kademlia/github.com/protobuf/proto"
+	"net"
+	"testing"
 )
-
-
 
 func TestNetwork_HandleReplyPing(t *testing.T) {
 	id := NewKademliaID("ffffffff00000000000000000000000000000000")
@@ -21,7 +19,7 @@ func TestNetwork_HandleReplyPing(t *testing.T) {
 
 	go network.HandleReply(wrapper, nil, addr)
 
-	x := <- network.getAnswerChannel(id)
+	x := <-network.getAnswerChannel(id)
 	returnedContact, ok := x.(Contact)
 	if ok {
 		if returnedContact.ID.String() != "ffffffff00000000000000000000000000000000" {
@@ -53,7 +51,7 @@ func TestNetwork_HandleReplyContactList(t *testing.T) {
 
 	go network.HandleReply(wrapper, nil, addr)
 
-	x := <- network.getAnswerChannel(id)
+	x := <-network.getAnswerChannel(id)
 	returnedContacts, ok := x.([]Contact)
 	if ok {
 		if returnedContacts[0].ID.String() != "ffffffff00000000000000000000000000000000" {
@@ -81,7 +79,7 @@ func TestNetwork_HandleReplyData(t *testing.T) {
 
 	go network.HandleReply(wrapper, nil, addr)
 
-	x := <- network.getAnswerChannel(id)
+	x := <-network.getAnswerChannel(id)
 	returnedAdress, ok := x.(string)
 	if ok {
 		if returnedAdress != "127.0.0.1:8000" {
@@ -106,7 +104,7 @@ func TestNetwork_HandleReplyStore(t *testing.T) {
 
 	go network.HandleReply(wrapper, nil, addr)
 
-	x := <- network.getAnswerChannel(id)
+	x := <-network.getAnswerChannel(id)
 	reply, ok := x.(string)
 	if ok {
 		if reply != "ok" {
@@ -131,7 +129,7 @@ func TestNetwork_SendPingMessage(t *testing.T) {
 	contact := NewContact(id, "localhost:9000")
 	go network.SendPingMessage(contact, channel)
 
-	x := <- channel
+	x := <-channel
 	reply, ok := x.(bool)
 	if ok {
 		if reply != false {
@@ -158,7 +156,7 @@ func TestNetwork_SendPingMessage2(t *testing.T) {
 		n, _, _ := serverConn.ReadFromUDP(buf)
 		message := &WrapperMessage{}
 		_ = proto.Unmarshal(buf[0:n], message)
-		if (message.ID[0:11] != "RequestPing") {
+		if message.ID[0:11] != "RequestPing" {
 			t.Error("Expected message id 'RequestPing', got " + message.ID)
 		}
 		if message.SourceID != network.node.rt.me.ID.String() {
@@ -185,7 +183,7 @@ func TestNetwork_SendFindContactMessage(t *testing.T) {
 		n, _, _ := serverConn.ReadFromUDP(buf)
 		message := &WrapperMessage{}
 		_ = proto.Unmarshal(buf[0:n], message)
-		if (message.ID[0:14] != "RequestContact") {
+		if message.ID[0:14] != "RequestContact" {
 			t.Error("Expected message id 'RequestContact', got " + message.ID)
 		}
 		if message.SourceID != network.node.rt.me.ID.String() {
@@ -211,7 +209,7 @@ func TestNetwork_SendFindDataMessage(t *testing.T) {
 		n, _, _ := serverConn.ReadFromUDP(buf)
 		message := &WrapperMessage{}
 		_ = proto.Unmarshal(buf[0:n], message)
-		if (message.ID[0:11] != "RequestData") {
+		if message.ID[0:11] != "RequestData" {
 			t.Error("Expected message id 'RequestData', got " + message.ID)
 		}
 		if message.SourceID != network.node.rt.me.ID.String() {
@@ -237,7 +235,7 @@ func TestNetwork_SendStoreMessage(t *testing.T) {
 		n, _, _ := serverConn.ReadFromUDP(buf)
 		message := &WrapperMessage{}
 		_ = proto.Unmarshal(buf[0:n], message)
-		if (message.ID[0:12] != "RequestStore") {
+		if message.ID[0:12] != "RequestStore" {
 			t.Error("Expected message id 'RequestStore', got " + message.ID)
 		}
 		if message.SourceID != network.node.rt.me.ID.String() {
@@ -255,7 +253,7 @@ func TestNetwork_TimeoutWaiter(t *testing.T) {
 
 	go network.TimeoutWaiter(0, returnChannel, id)
 
-	x := <- returnChannel
+	x := <-returnChannel
 	reply, ok := x.(bool)
 	if ok {
 		if reply != false {

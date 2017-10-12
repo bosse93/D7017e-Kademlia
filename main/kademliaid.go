@@ -47,14 +47,14 @@ func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
 }
 
 func (kademliaID *KademliaID) CalcDistance(target *KademliaID) *KademliaID {
-	
+
 	result := KademliaID{}
-	
+
 	for i := 0; i < IDLength; i++ {
-		
+
 		result[i] = kademliaID[i] ^ target[i]
 	}
-	
+
 	return &result
 }
 
