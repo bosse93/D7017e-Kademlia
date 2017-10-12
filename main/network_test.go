@@ -119,9 +119,125 @@ func TestNetwork_RepublishData(t *testing.T) {
 
 }
 
-func TestNetwork_HandleRequest(t *testing.T) {
+func TestNetwork_HandleRequestPing(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	packet := &RequestPing{}
+	wrapperMsg := &WrapperMessage_RequestPing{packet}
+	wrapper := &WrapperMessage{"RequestPing", id.String(), id.String(), wrapperMsg}
 
+	contact := NewContact(id, "localhost:9000")
+	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	CheckError(err)
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err)
+	defer serverConn.Close()
+	buf := make([]byte, 4096)
+
+	go network.HandleRequest(wrapper, nil, serverAddr)
+
+	for {
+		n, _, _ := serverConn.ReadFromUDP(buf)
+		message := &WrapperMessage{}
+		_ = proto.Unmarshal(buf[0:n], message)
+		if message.ID[0:9] != "ReplyPing" {
+			t.Error("Expected message id 'ReplyPing', got " + message.ID)
+		}
+		if message.SourceID != network.node.rt.me.ID.String() {
+			t.Error("Expected message source to be " + network.node.rt.me.ID.String() + ", got " + message.SourceID)
+		}
+		return
+	}
 }
+
+func TestNetwork_HandleRequestContact(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	packet := &RequestContact{NewRandomKademliaID().String()}
+	wrapperMsg := &WrapperMessage_RequestContact{packet}
+	wrapper := &WrapperMessage{"RequestContact", id.String(), id.String(), wrapperMsg}
+
+	contact := NewContact(id, "localhost:9000")
+	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	CheckError(err)
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err)
+	defer serverConn.Close()
+	buf := make([]byte, 4096)
+
+	go network.HandleRequest(wrapper, nil, serverAddr)
+
+	for {
+		n, _, _ := serverConn.ReadFromUDP(buf)
+		message := &WrapperMessage{}
+		_ = proto.Unmarshal(buf[0:n], message)
+		if message.ID[0:16] != "ReplyContactList" {
+			t.Error("Expected message id 'ReplyContactList', got " + message.ID)
+		}
+		if message.SourceID != network.node.rt.me.ID.String() {
+			t.Error("Expected message source to be " + network.node.rt.me.ID.String() + ", got " + message.SourceID)
+		}
+		return
+	}
+}
+
+func TestNetwork_HandleRequestData(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	packet := &RequestData{"ffffffff00000000000000000000000000000000"}
+	wrapperMsg := &WrapperMessage_RequestData{packet}
+	wrapper := &WrapperMessage{"RequestData", id.String(), id.String(), wrapperMsg}
+
+	contact := NewContact(id, "localhost:9000")
+	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	CheckError(err)
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err)
+	defer serverConn.Close()
+	buf := make([]byte, 4096)
+
+	go network.HandleRequest(wrapper, nil, serverAddr)
+
+	for {
+		n, _, _ := serverConn.ReadFromUDP(buf)
+		message := &WrapperMessage{}
+		_ = proto.Unmarshal(buf[0:n], message)
+		if message.ID[0:16] != "ReplyContactList" {
+			t.Error("Expected message id 'ReplyContactList', got " + message.ID)
+		}
+		if message.SourceID != network.node.rt.me.ID.String() {
+			t.Error("Expected message source to be " + network.node.rt.me.ID.String() + ", got " + message.SourceID)
+		}
+		return
+	}
+}
+
+/*func TestNetwork_HandleRequestStore(t *testing.T) {
+	id := NewKademliaID("ffffffff00000000000000000000000000000000")
+	packet := &RequestStore{NewRandomKademliaID().String(), "data"}
+	wrapperMsg := &WrapperMessage_RequestStore{packet}
+	wrapper := &WrapperMessage{"RequestStore", id.String(), id.String(), wrapperMsg}
+
+	contact := NewContact(id, "localhost:9000")
+	serverAddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	CheckError(err)
+	serverConn, err := net.ListenUDP("udp", serverAddr)
+	CheckError(err)
+	defer serverConn.Close()
+	buf := make([]byte, 4096)
+
+	go network.HandleRequest(wrapper, nil, serverAddr)
+
+	for {
+		n, _, _ := serverConn.ReadFromUDP(buf)
+		message := &WrapperMessage{}
+		_ = proto.Unmarshal(buf[0:n], message)
+		if message.ID[0:10] != "ReplyStore" {
+			t.Error("Expected message id 'ReplyStore', got " + message.ID)
+		}
+		if message.SourceID != network.node.rt.me.ID.String() {
+			t.Error("Expected message source to be " + network.node.rt.me.ID.String() + ", got " + message.SourceID)
+		}
+		return
+	}
+}*/
 
 func TestNetwork_SendPingMessage(t *testing.T) {
 	id := NewKademliaID("ffffffff00000000000000000000000000000000")

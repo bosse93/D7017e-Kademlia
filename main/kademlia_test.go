@@ -6,7 +6,7 @@ import (
 
 var kademlia = NewKademlia(network)
 
-func TestKademlia_findNextNodeToAsk(t *testing.T) {
+func TestKademlia_FindNextNodeToAsk(t *testing.T) {
 	// GIVEN
 	localKademlia := kademlia
 	contacts := []Contact{}
@@ -15,7 +15,7 @@ func TestKademlia_findNextNodeToAsk(t *testing.T) {
 	localKademlia.closest.Append(contacts)
 	localKademlia.asked[*contacts[0].ID] = true
 	// WHEN
-	contact, success := localKademlia.findNextNodeToAsk()
+	contact, success := localKademlia.FindNextNodeToAsk()
 	// THEN
 	if contact != nil {
 		t.Error("Expected nil, got ", contact)
@@ -26,7 +26,7 @@ func TestKademlia_findNextNodeToAsk(t *testing.T) {
 
 	localKademlia.asked[*contacts[0].ID] = false
 	// WHEN
-	contact2, success2 := localKademlia.findNextNodeToAsk()
+	contact2, success2 := localKademlia.FindNextNodeToAsk()
 	// THEN
 	if contact2.ID != contacts[0].ID {
 		t.Error("Expected " + contacts[0].String() + ", got " + contact.String())
