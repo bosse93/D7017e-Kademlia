@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"net"
 	"testing"
+	"os"
+	"strconv"
+	"time"
 )
 
-var network *Network = CreateNodes(10)
+var network *Network = CreateTestNodes(20)
 
 func connect(Usage string, arg0 string) {
 	p := make([]byte, 2048)
@@ -35,6 +38,66 @@ func TestNewKademliaID(t *testing.T) {
 
 func TestHashKademliaID(t *testing.T) {
 	HashKademliaID("testar")
+}
+
+func CreateTestNodes(amount int) (network *Network)  {
+	firstNode := NewContact(HashKademliaID("0"), "localhost:8000")
+	firstNodeRT := NewRoutingTable(firstNode)
+	node := NewNode(firstNodeRT)
+	lastTCPNetwork := NewFileNetwork(node, "localhost", 8000)
+	network = NewNetwork(node, lastTCPNetwork, "localhost", 8000)
+	//nodeList := []*RoutingTable{firstNodeRT}
+	//lastNode := firstNode
+	//create 100 nodes
+	if _, err := os.Stat("kademliastorage/" + firstNode.ID.String()); os.IsNotExist(err) {
+		os.Mkdir("kademliastorage/"+firstNode.ID.String(), 0777)
+	}
+
+	if _, err := os.Stat("upload/" + firstNode.ID.String()); os.IsNotExist(err) {
+		os.Mkdir("upload/"+firstNode.ID.String(), 0777)
+	}
+
+	if _, err := os.Stat("downloads/" + firstNode.ID.String()); os.IsNotExist(err) {
+		os.Mkdir("downloads/"+firstNode.ID.String(), 0777)
+	}
+
+	for i := 1; i < amount; i++ {
+		port := 8001 + i
+		a := "localhost:" + strconv.Itoa(port)
+
+		ID := HashKademliaID(strconv.Itoa(i))
+		rt := NewRoutingTable(NewContact(ID, a))
+		//nodeList = append(nodeList, rt)
+		rt.AddContact(firstNodeRT.me)
+		node := NewNode(rt)
+		tcpNetwork := NewFileNetwork(node, "localhost", port)
+		nw := NewNetwork(node, tcpNetwork, "localhost", port)
+		fmt.Println("Ny Nod varv " + strconv.Itoa(i+1) + ": " + rt.me.String())
+		//go nw.Listen("localhost", port)
+		time.Sleep(500 * time.Millisecond)
+		kademlia := NewKademlia(nw)
+
+		contactResult, _ := kademlia.LookupContact(ID, false)
+		if len(contactResult) > 0 {
+			for q := range contactResult {
+				rt.AddContact(contactResult[q])
+			}
+		}
+
+		if _, err := os.Stat("kademliastorage/" + ID.String()); os.IsNotExist(err) {
+			os.Mkdir("kademliastorage/"+ID.String(), 0777)
+		}
+
+		if _, err := os.Stat("upload/" + ID.String()); os.IsNotExist(err) {
+			os.Mkdir("upload/"+ID.String(), 0777)
+		}
+
+		if _, err := os.Stat("downloads/" + ID.String()); os.IsNotExist(err) {
+			os.Mkdir("downloads/"+ID.String(), 0777)
+		}
+
+	}
+	return
 }
 
 /* TODO - GÖR FRONTEND ANROPET AUTOMAGISKT från funktionen, dvs samma sak som dfs store gör */

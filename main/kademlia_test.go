@@ -2,13 +2,13 @@ package main
 
 import (
 	"testing"
+	"strconv"
 )
 
-var kademlia = NewKademlia(network)
 
 func TestKademlia_FindNextNodeToAsk(t *testing.T) {
 	// GIVEN
-	localKademlia := kademlia
+	localKademlia := NewKademlia(network)
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(NewRandomKademliaID(), "localhost:8200"))
 	localKademlia.closest = NewContactCandidates()
@@ -41,12 +41,43 @@ func TestKademlia_AskNextNode(t *testing.T) {
 }
 
 func TestKademlia_LookupContact(t *testing.T) {
+	kademlia := NewKademlia(network)
+	contacts, _ := kademlia.LookupContact(HashKademliaID("100"), false)
+	distances := NewContactCandidates()
+	for i := 0; i < 20; i++ {
+		dist := HashKademliaID(strconv.Itoa(i)).CalcDistance(HashKademliaID("100"))
+		cont := []Contact{}
+		c := NewContact(dist, "")
+		c.distance = dist
+		cont = append(cont, c)
+		distances.Append(cont)
+	}
+	distances.Sort()
+
+	for i := range contacts {
+		if contacts[i].ID.CalcDistance(HashKademliaID("100")).String() != distances.contacts[i].ID.String() {
+			t.Error("Expected distance to be " + distances.contacts[i].ID.String() + ", got " + contacts[i].ID.CalcDistance(HashKademliaID("100")).String())
+		}
+	}
 }
 
 func TestKademlia_LookupData(t *testing.T) {
+	kademlia := NewKademlia(network)
+	found := kademlia.LookupData("100")
 
+	if found {
+		t.Error("Expected found to be false, got" + strconv.FormatBool(found))
+	}
 }
 
-func TestKademlia_Store(t *testing.T) {
+/*func TestKademlia_Store(t *testing.T) {
+	kademlia := NewKademlia(network)
+	upload(network.node.rt.me.ID.String(), "testStore.txt")
+	go kademlia.Store("testStore.txt")
+	time.Sleep(1*time.Second)
+	found := kademlia.LookupData("testStore.txt")
 
-}
+	if !found {
+		t.Error("Expected found to be 'true', got" + strconv.FormatBool(found))
+	}
+}*/
