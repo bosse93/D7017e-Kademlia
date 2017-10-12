@@ -19,6 +19,7 @@ type FileNetwork struct {
 	mux2             *sync.Mutex
 }
 
+// NewFileNetwork starts a tcp listener at ip:port.
 func NewFileNetwork(node *Node, ip string, port int) *FileNetwork {
 	network := &FileNetwork{}
 	network.node = node
@@ -31,13 +32,14 @@ func NewFileNetwork(node *Node, ip string, port int) *FileNetwork {
 	CheckError(err)
 	network.listenConnection = serverConn
 	fmt.Println("TCP Listening on port " + strconv.Itoa(port))
-	go network.Listen()
+	go network.Listener()
 
 	return network
 }
 
-//Listening for new packets on ip, port combination
-func (network *FileNetwork) Listen() {
+// Listener for TCP connections on network.listenConnection.
+// On successfull connection established calls HandleFileRequest.
+func (network *FileNetwork) Listener() {
 	defer network.listenConnection.Close()
 
 	for {
@@ -50,6 +52,8 @@ func (network *FileNetwork) Listen() {
 	}
 }
 
+// HandleFileRequest reads the network buffer for ID of requested file.
+// If node got the file it opens it and sends it through the connection to the requester.
 func (network *FileNetwork) HandleFileRequest(connection net.Conn) {
 	defer connection.Close()
 	buffer := make([]byte, 1024)
@@ -61,7 +65,7 @@ func (network *FileNetwork) HandleFileRequest(connection net.Conn) {
 	}
 	//filetoOpen := string(buffer) + ".txt"
 
-	if network.node.gotData(*NewKademliaID(string(buffer[:n]))) {
+	if network.node.GotData(*NewKademliaID(string(buffer[:n]))) {
 		network.mux2.Lock()
 		file, err := os.Open("kademliastorage/" + network.node.rt.me.ID.String() + "/" + string(buffer[:n]))
 		if err != nil {
@@ -75,13 +79,13 @@ func (network *FileNetwork) HandleFileRequest(connection net.Conn) {
 		network.mux2.Unlock()
 		fmt.Println(n1, "bytes sent2")
 	} else {
-		if _, err := os.Stat("upload/" + network.node.rt.me.ID.String() + "/" + decodeHash(string(buffer[:n]))); os.IsNotExist(err) {
+		if _, err := os.Stat("upload/" + network.node.rt.me.ID.String() + "/" + DecodeHash(string(buffer[:n]))); os.IsNotExist(err) {
 			fmt.Println("Node doesn't have the requested file.")
 			connection.Close()
 			return
 		} else {
 			network.mux1.Lock()
-			file, err := os.Open("upload/" + network.node.rt.me.ID.String() + "/" + decodeHash(string(buffer[:n])))
+			file, err := os.Open("upload/" + network.node.rt.me.ID.String() + "/" + DecodeHash(string(buffer[:n])))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -96,7 +100,10 @@ func (network *FileNetwork) HandleFileRequest(connection net.Conn) {
 	}
 }
 
-func (network *FileNetwork) downloadFile(fileID *KademliaID, address string, userDownload bool) {
+// DownloadFile establishes a TCP connection to another node.
+// Sends the desired fileID on the and waits for file transfer.
+// If file is not found at target the connection will be closed.
+func (network *FileNetwork) DownloadFile(fileID *KademliaID, address string, userDownload bool) {
 	destinationAddr, err := net.ResolveTCPAddr("tcp", address)
 	connection, err := net.DialTCP("tcp", nil, destinationAddr)
 	defer connection.Close()
@@ -109,7 +116,7 @@ func (network *FileNetwork) downloadFile(fileID *KademliaID, address string, use
 
 	//fileBuffer := make([]byte, 1024)
 	if userDownload {
-		file, err := os.Create("downloads/" + network.node.rt.me.ID.String() + "/" + decodeHash(fileID.String()))
+		file, err := os.Create("downloads/" + network.node.rt.me.ID.String() + "/" + DecodeHash(fileID.String()))
 		if err != nil {
 			log.Fatal(err)
 		}

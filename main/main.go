@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net"
 	"strconv"
@@ -19,41 +18,6 @@ import (
 
 func main() {
 	StartNetwork()
-}
-
-func decodeHash(hash string) string {
-	byteArray := []byte(hash)
-
-	for i := 0; i < 19; i++ {
-		if (string(byteArray[i*2]) == "0") && (string(byteArray[(i*2)+1]) == "3") {
-			fileName, _ := hex.DecodeString(string(byteArray[:(i)*2]))
-			return string(fileName)
-		}
-	}
-	return "Error when decoding dataID"
-	/*
-		fmt.Println("DECODER")
-		fmt.Println(hash)
-
-		index := strings.IndexByte(hash, byte("03"))
-		fmt.Println(index)
-		fileName, _ := hex.DecodeString(hash[:index-1])
-	*/
-	//return string(byteArray)
-}
-
-func HashKademliaID(fileName string) *KademliaID {
-	fmt.Println("Fil Namn: " + fileName)
-	f := hex.EncodeToString([]byte(fileName))
-	if len(f) > 38 {
-		fmt.Println(f)
-		fmt.Println("Name of file can be maximum 19 characters, including file extension.")
-	}
-	f = f + "03"
-	for len(f) < 40 {
-		f = f + "01"
-	}
-	return NewKademliaID(f)
 }
 
 func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network, pinned *map[string]bool, mux *sync.Mutex) {

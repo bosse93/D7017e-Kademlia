@@ -17,6 +17,8 @@ type Node struct {
 	republishRandomSeconds int
 }
 
+// NewNode initializes node object. Setting republish time.
+// Returns node as *Node
 func NewNode(rt *RoutingTable) *Node {
 	node := &Node{}
 	node.rt = rt
@@ -27,6 +29,8 @@ func NewNode(rt *RoutingTable) *Node {
 	return node
 }
 
+// Store adds entry to node.data map.
+// Adds entry as ID:timestamp. Timestamp represents when a republish is due.
 func (node *Node) Store(key KademliaID, timeStamp time.Time) {
 	node.mux.Lock()
 	node.data[key] = (timeStamp.Add(time.Duration(node.republishTimeSeconds+rand.Intn(node.republishRandomSeconds)) * time.Second))
@@ -41,7 +45,9 @@ func (node *Node) GetDataMap() map[KademliaID]time.Time {
 	return node.data
 }
 
-func (node *Node) deleteEntry(dataEntryID KademliaID, storageMux *sync.Mutex) {
+// DeleteEntry deletes an entry from node.data map.
+// Also removes the corresponding file in kademliastorage directory.
+func (node *Node) DeleteEntry(dataEntryID KademliaID, storageMux *sync.Mutex) {
 	node.mux.Lock()
 	delete(node.data, dataEntryID)
 	node.mux.Unlock()
@@ -53,7 +59,9 @@ func (node *Node) deleteEntry(dataEntryID KademliaID, storageMux *sync.Mutex) {
 	}
 }
 
-func (node *Node) gotData(key KademliaID) bool {
+// GotData checks node.data map if an entry exists.
+// Returns true if it exists. False otherwise.
+func (node *Node) GotData(key KademliaID) bool {
 	node.mux.Lock()
 	if _, ok := node.data[key]; ok {
 		node.mux.Unlock()

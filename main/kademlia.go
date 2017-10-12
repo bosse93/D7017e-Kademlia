@@ -13,15 +13,20 @@ import (
 )
 
 type Kademlia struct {
+	// closest contains closest contacts found so far.
 	closest                       ContactCandidates
+	// asked contains true if id already been asked.
 	asked                         map[KademliaID]bool
 	rt                            *RoutingTable
 	network                       Network
 	numberOfIdenticalAnswersInRow int
 	threadCount                   int
+	// k number of network requests will be done simultaneously.
 	k                             int
 }
 
+// NewKademlia initializes Kademlia object. 
+// Sets k value to the desired amount of simultaneously network requests.
 func NewKademlia(nw *Network) *Kademlia {
 	kademlia := &Kademlia{}
 	kademlia.asked = make(map[KademliaID]bool)
@@ -35,7 +40,7 @@ func NewKademlia(nw *Network) *Kademlia {
 }
 
 // FindNextNodeToAsk helps the Lookup function to find the next node to ask.
-// This is done by finding a node which haven't been asked yet in the contact candidates map.
+// This is done by finding a node which haven't been asked yet in the kademlia asked map.
 func (kademlia *Kademlia) FindNextNodeToAsk() (nextContact *Contact, success bool) {
 	for i := range kademlia.closest.contacts {
 		if kademlia.asked[*kademlia.closest.contacts[i].ID] != true {
@@ -50,6 +55,8 @@ func (kademlia *Kademlia) FindNextNodeToAsk() (nextContact *Contact, success boo
 	return
 }
 
+// AskNextNode will create a new go routine to do a network request.
+// If findData is true a SendFindDataMessage will be done else SendFindContactMessage is done.
 func (kademlia *Kademlia) AskNextNode(target *KademliaID, destination *Contact, findData bool, returnChannel chan interface{}) {
 	if findData {
 		go kademlia.network.SendFindDataMessage(target.String(), destination, returnChannel)
@@ -58,7 +65,11 @@ func (kademlia *Kademlia) AskNextNode(target *KademliaID, destination *Contact, 
 	}
 }
 
-func (kademlia *Kademlia) updateClosestContacts(networkAnswer []Contact, target *KademliaID) {
+// UpdateClosestContacts will update closest contacts with newly aquired contacts.
+// All nodes that doesn't already exist in closest will be added.
+// Then the list is sorted and upto 20 closest contacts is kept.
+// If no new Contact is added to closest identical answers in a row will be increased.
+func (kademlia *Kademlia) UpdateClosestContacts(networkAnswer []Contact, target *KademliaID) {
 	same := true
 	var newNodeList []Contact
 	for i := range networkAnswer {
@@ -91,6 +102,10 @@ func (kademlia *Kademlia) updateClosestContacts(networkAnswer []Contact, target 
 	kademlia.closest.contacts = kademlia.closest.GetContacts(numberOfResults)
 }
 
+// LookupContact returns 20 closest contacts to target. 
+// Spawns threads to do requests to Contacts and then handle their resonse.
+// Stops if same answer is recieved multiple times or if áll contacts in closest have been asked.
+// If findData is set to true it will try to find data if it exists on the network.
 func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (returnContact []Contact, dataReturn string) {
 	kademlia.closest = NewContactCandidates()
 	kademlia.closest.Append(kademlia.rt.FindClosestContacts(target, 3))
@@ -114,7 +129,7 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 		case networkAnswer := <-returnChannel:
 			switch networkAnswer := networkAnswer.(type) {
 			case []Contact:
-				kademlia.updateClosestContacts(networkAnswer, target)
+				kademlia.UpdateClosestContacts(networkAnswer, target)
 				if kademlia.numberOfIdenticalAnswersInRow > 2 {
 					returnContact = kademlia.closest.contacts
 					fmt.Println("Same Answer in a row")
@@ -163,6 +178,9 @@ func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (retu
 	}
 }
 
+// LookupData will try to find data with name fileName in network.
+// FileName hash is passed to LookupContact which will locate the data.
+// When/if data is located fileNetwork.DownloadFile will download the file. 
 func (kademlia *Kademlia) LookupData(fileName string) bool {
 	fileNameHash := HashKademliaID(fileName)
 
@@ -171,7 +189,7 @@ func (kademlia *Kademlia) LookupData(fileName string) bool {
 	contacts, data := kademlia.LookupContact(fileNameHash, true)
 	if len(contacts) == 0 {
 		fmt.Println("LookupData found data")
-		go kademlia.network.fileNetwork.downloadFile(fileNameHash, data, true)
+		go kademlia.network.fileNetwork.DownloadFile(fileNameHash, data, true)
 		return true
 	} else {
 		fmt.Println("LookupData did not find data")
@@ -179,12 +197,15 @@ func (kademlia *Kademlia) LookupData(fileName string) bool {
 	}
 }
 
+// Store will store fileName on network.
+// Uses LookupContact to find closest contacts to hash of fileName.
+// When closest contacts is found a store message is sent through SendStoreAndWaitForAnswer.
 func (kademlia *Kademlia) Store(fileName string) {
 	fileNameHash := HashKademliaID(fileName)
 	contacts, _ := kademlia.LookupContact(fileNameHash, false)
 	for i := 0; i < len(contacts); i++ {
 		if contacts[i].ID.String() != kademlia.rt.me.ID.String() {
-			go kademlia.sendStoreAndWaitForAnswer(fileNameHash.String(), contacts[i].Address, i)
+			go kademlia.SendStoreAndWaitForAnswer(fileNameHash.String(), contacts[i].Address, i)
 		} else {
 			fileDst, _ := os.Create("kademliastorage/" + kademlia.rt.me.ID.String() + "/" + fileNameHash.String())
 			fileSrc, _ := os.Open("upload/" + kademlia.rt.me.ID.String() + "/" + fileName)
@@ -197,7 +218,9 @@ func (kademlia *Kademlia) Store(fileName string) {
 	}
 }
 
-func (kademlia *Kademlia) sendStoreAndWaitForAnswer(fileName string, address string, number int) {
+// SendStoreAndWaitForAnswer sends a store message to address and await answer.
+// If store request is successfully accepted a confirmation will be recieved.
+func (kademlia *Kademlia) SendStoreAndWaitForAnswer(fileName string, address string, number int) {
 	returnChannel := make(chan interface{})
 	go kademlia.network.SendStoreMessage(fileName, address, returnChannel)
 	returnValue := <-returnChannel

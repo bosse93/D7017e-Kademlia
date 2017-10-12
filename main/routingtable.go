@@ -7,6 +7,9 @@ type RoutingTable struct {
 	buckets [IDLength * 8]*bucket
 }
 
+// NewRoutingTable initializes RoutingTable object.
+// Populates RoutingTable bucket list with new Bucket objects.
+// Returns RoutingTable as *RoutingTable
 func NewRoutingTable(me Contact) *RoutingTable {
 	routingTable := &RoutingTable{}
 	for i := 0; i < IDLength*8; i++ {
@@ -16,23 +19,30 @@ func NewRoutingTable(me Contact) *RoutingTable {
 	return routingTable
 }
 
+// AddContact adds a contact to routing table.
+// If contact is RoutingTable owner he is not added.
+// Finds appropriate Bucket and add contact to it.
 func (routingTable *RoutingTable) AddContact(contact Contact) {
 	if contact.ID != routingTable.me.ID {
-		bucketIndex := routingTable.getBucketIndex(contact.ID)
+		bucketIndex := routingTable.GetBucketIndex(contact.ID)
 		bucket := routingTable.buckets[bucketIndex]
 		bucket.AddContact(contact)
 	}
 }
 
+// AddContactNetwork adds contact to RoutingTable.
+// Finds appropriate Bucket and add Contact.
 func (routingTable *RoutingTable) AddContactNetwork(contact Contact, network *Network) {
-	bucketIndex := routingTable.getBucketIndex(contact.ID)
+	bucketIndex := routingTable.GetBucketIndex(contact.ID)
 	bucket := routingTable.buckets[bucketIndex]
 	bucket.AddContactNetwork(contact, network)
 }
 
+// FindClosestContacts finds 20 closest contacts to target in RoutingTable
+// Returns a sorted list with Contacts. Closest to target first.
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {
 	var candidates ContactCandidates
-	bucketIndex := routingTable.getBucketIndex(target)
+	bucketIndex := routingTable.GetBucketIndex(target)
 
 	bucket := routingTable.buckets[bucketIndex]
 	candidates.Append(bucket.GetContactAndCalcDistance(target))
@@ -56,7 +66,8 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count 
 	return candidates.GetContacts(count)
 }
 
-func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
+// GetBucketIndex finds which bucket id is supposed to be added to.
+func (routingTable *RoutingTable) GetBucketIndex(id *KademliaID) int {
 	distance := id.CalcDistance(routingTable.me.ID)
 	for i := 0; i < IDLength; i++ {
 		for j := 0; j < 8; j++ {
