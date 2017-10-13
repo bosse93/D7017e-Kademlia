@@ -10,7 +10,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -251,6 +250,7 @@ func upload(id string, file string) {
 		fmt.Println("fileDst ok")
 	}
 	fileSrc.Close()
+	fileDst.Close()
 }
 
 func RemoveFile(sleepTime int, pinned *map[string]bool, file string, id string, mux *sync.Mutex) {
