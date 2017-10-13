@@ -3,10 +3,10 @@ package main
 import (
 	"D7024e-Kademlia/github.com/protobuf/proto"
 	"net"
+	"os"
+	"strconv"
 	"testing"
 	"time"
-	"strconv"
-	"os"
 )
 
 func TestNetwork_HandleReplyPing(t *testing.T) {
@@ -121,7 +121,7 @@ func TestNetwork_HandleReplyStore(t *testing.T) {
 func TestNetwork_RepublishData(t *testing.T) {
 	storeKademlia := NewKademlia(network)
 	go storeKademlia.Store("testStore.txt")
-	time.Sleep(time.Duration(1)*time.Second)
+	time.Sleep(time.Duration(1) * time.Second)
 	port := 9100
 	a := "localhost:" + strconv.Itoa(port)
 

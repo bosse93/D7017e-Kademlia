@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"testing"
 	"os"
 	"strconv"
-	"time"
 	"sync"
+	"testing"
+	"time"
 )
 
 var network *Network = CreateTestNodes(100)
@@ -41,7 +41,7 @@ func TestHashKademliaID(t *testing.T) {
 	HashKademliaID("testar")
 }
 
-func CreateTestNodes(amount int) (network *Network)  {
+func CreateTestNodes(amount int) (network *Network) {
 	firstNode := NewContact(HashKademliaID("0"), "localhost:8000")
 	firstNodeRT := NewRoutingTable(firstNode)
 	node := NewNode(firstNodeRT)
@@ -124,24 +124,24 @@ func CreateTestNodes(amount int) (network *Network)  {
 func TestHandleRequest(t *testing.T) {
 	addr := net.UDPAddr{
 		Port: 1234,
-		IP: net.ParseIP("127.0.0.1"),
+		IP:   net.ParseIP("127.0.0.1"),
 	}
-	splitStore := []string {"store", "testStore.txt"}
+	splitStore := []string{"store", "testStore.txt"}
 	ser, err := net.ListenUDP("udp", &addr)
-	splitCat := []string {"cat", "testStore.txt"}
+	splitCat := []string{"cat", "testStore.txt"}
 	var mutex = &sync.Mutex{}
 	pinned := make(map[string]bool)
 
-	if err !=  nil {
+	if err != nil {
 		fmt.Printf("Some error  %v", err)
 	}
 	buf := make([]byte, 4096)
 	go HandleRequest(ser, &addr, splitStore, network, &pinned, mutex)
 	n, _, _ := ser.ReadFromUDP(buf)
-	if string(buf[0:n]) != "stored: " + HashKademliaID("testStore.txt").String() {
+	if string(buf[0:n]) != "stored: "+HashKademliaID("testStore.txt").String() {
 		t.Error("Expected message to be " + HashKademliaID("testStore.txt").String() + ", got " + string(buf[0:n]))
 	}
-	time.Sleep(time.Duration(2)*time.Second)
+	time.Sleep(time.Duration(2) * time.Second)
 	go HandleRequest(ser, &addr, splitCat, network, &pinned, mutex)
 
 	n2, _, _ := ser.ReadFromUDP(buf)

@@ -78,7 +78,7 @@ func (network *FileNetwork) HandleFileRequest(connection net.Conn) {
 		file.Close()
 		network.mux2.Unlock()
 		fmt.Println(n1, "bytes sent2")
-		
+
 	} else {
 		if _, err := os.Stat("upload/" + network.node.rt.me.ID.String() + "/" + DecodeHash(string(buffer[:n]))); os.IsNotExist(err) {
 			fmt.Println("Node doesn't have the requested file.")

@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"strconv"
-	"time"
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 func main() {
@@ -202,20 +202,19 @@ func upload(id string, file string) {
 }
 
 func RemoveFile(sleepTime int, pinned *map[string]bool, file string, id string, mux *sync.Mutex) {
-	fmt.Println("removing " + "downloads/" + id + "/" + file + " if not pinned")
 	time.Sleep(time.Duration(sleepTime) * time.Second)
-	fmt.Println("timeout in remove file")
-	mux.Lock()
+	fmt.Println("removing " + "downloads/" + id + "/" + file + " if not pinned")
+
 	if _, err := os.Stat("downloads/" + id + "/" + file); !os.IsNotExist(err) {
 		if !(*pinned)[file] {
 			fmt.Println("not pinned")
+			mux.Lock()
 			os.Remove("downloads/" + id + "/" + file)
+			mux.Unlock()
 		} else {
 			fmt.Println("pinned, trying again later")
 			go RemoveFile(sleepTime, pinned, file, id, mux)
 		}
-	} else {
-		fmt.Println("can't find file to remove")
 	}
-	mux.Unlock()
+
 }

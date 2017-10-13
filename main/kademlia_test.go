@@ -1,12 +1,11 @@
 package main
 
 import (
-	"testing"
-	"strconv"
 	"fmt"
+	"strconv"
+	"testing"
 	"time"
 )
-
 
 func TestKademlia_FindNextNodeToAsk(t *testing.T) {
 	// GIVEN
@@ -76,7 +75,7 @@ func TestKademlia_Store(t *testing.T) {
 	kademlia := NewKademlia(network)
 	upload(network.node.rt.me.ID.String(), "testStore.txt")
 	go kademlia.Store("testStore.txt")
-	time.Sleep(time.Duration(1)*time.Second)
+	time.Sleep(time.Duration(1) * time.Second)
 	kademlia2 := NewKademlia(network)
 	found := kademlia2.LookupData("testStore.txt")
 	fmt.Println("found " + strconv.FormatBool(found))
