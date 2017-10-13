@@ -162,7 +162,6 @@ func TestNetwork_RepublishData(t *testing.T) {
 	if !gotData {
 		t.Error("Expected node to have data")
 	}
-
 }
 
 func TestNetwork_HandleRequestPing(t *testing.T) {

@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-var network *Network = CreateTestNodes(2)
+var network *Network = CreateTestNodes(100)
 
 func connect(Usage string, arg0 string) {
 	p := make([]byte, 2048)
@@ -103,7 +103,7 @@ func CreateTestNodes(amount int) (network *Network)  {
 
 /* TODO - GÖR FRONTEND ANROPET AUTOMAGISKT från funktionen, dvs samma sak som dfs store gör */
 
-func TestHandleRequest_Store(t *testing.T) {
+/*func TestHandleRequest_Store(t *testing.T) {
 	addr := net.UDPAddr{
 		Port: 1234,
 		IP: net.ParseIP("127.0.0.1"),
@@ -119,24 +119,35 @@ func TestHandleRequest_Store(t *testing.T) {
 
 	go HandleRequest(ser, &addr, split, network, &pinned, mutex)
 
-}
+}*/
 
-func TestHandleRequest_Cat(t *testing.T) {
+func TestHandleRequest(t *testing.T) {
 	addr := net.UDPAddr{
 		Port: 1234,
 		IP: net.ParseIP("127.0.0.1"),
 	}
+	splitStore := []string {"store", "testStore.txt"}
 	ser, err := net.ListenUDP("udp", &addr)
-	split := []string {"cat", "testStore.txt"}
+	splitCat := []string {"cat", "testStore.txt"}
 	var mutex = &sync.Mutex{}
 	pinned := make(map[string]bool)
 
 	if err !=  nil {
 		fmt.Printf("Some error  %v", err)
 	}
+	buf := make([]byte, 4096)
+	go HandleRequest(ser, &addr, splitStore, network, &pinned, mutex)
+	n, _, _ := ser.ReadFromUDP(buf)
+	if string(buf[0:n]) != "stored: " + HashKademliaID("testStore.txt").String() {
+		t.Error("Expected message to be " + HashKademliaID("testStore.txt").String() + ", got " + string(buf[0:n]))
+	}
+	time.Sleep(time.Duration(2)*time.Second)
+	go HandleRequest(ser, &addr, splitCat, network, &pinned, mutex)
 
-	go HandleRequest(ser, &addr, split, network, &pinned, mutex)
-
+	n2, _, _ := ser.ReadFromUDP(buf)
+	if string(buf[0:n2]) != "testStore text" {
+		t.Error("Expected message to be 'testStore text', got " + string(buf[0:n2]))
+	}
 }
 
 //oklart hur detta blir, körde en dfs store från front och fick 100%

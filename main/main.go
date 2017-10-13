@@ -188,46 +188,9 @@ func StartNetwork() {
 	if _, err := os.Stat("downloads/"); os.IsNotExist(err) {
 		os.Mkdir("downloads", 0777)
 	}
-	//file, err := os.Open("testStore.txt")
-	//Creates x amount of nodes in a network
-	firstNetwork := CreateNodes(10)
-	//defer removeDirectories(directories)
-	//printFirstNodeRT(firstNode, firstNodeRT)
-	//printLastNodeRT(nodeList)
-
-	//testStore := HashKademliaID("testStore.txt")
-
-	//pwd, _ := os.Getwd()
-	//dat, err := ioutil.ReadFile(pwd+"/../src/D7024e-Kademlia/testStore.txt")
-
-	//check(err)
-
-	/*kademlia := NewKademlia(firstNetwork)
-	//store link to workshop jpg
-	fileName := "testStore.txt"
-
-	kademlia.Store(fileName)
-	time.Sleep(3*time.Second)
-	kademlia = NewKademlia(firstNetwork)
-	//lookup workshop jpg
-
-	success := kademlia.LookupData(fileName)
-	if(success) {
-		fmt.Println("Data found and downloaded")
-	} else {
-		fmt.Println("Data not found")
-	}*/
-
-	//Setup Frontend
-
-	//downloadFile("testStore.txt", "https://www.dropbox.com/s/b0a98iiuu1o9m5y/Workshopmockup-1.jpg?dl=1")
+	firstNetwork := CreateNodes(100)
 	StartFrontend(firstNetwork)
 
-	/*for k1, v := range IDRTList {
-		for k2, v2 := range v.node.data {
-			fmt.Println("Node " + k1.String() + " has " + v2 + " stored for key " + k2.String())
-		}
-	}*/
 
 }
 

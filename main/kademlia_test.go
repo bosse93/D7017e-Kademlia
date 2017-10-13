@@ -46,7 +46,7 @@ func TestKademlia_LookupContact(t *testing.T) {
 	kademlia := NewKademlia(network)
 	contacts, _ := kademlia.LookupContact(HashKademliaID("100"), false)
 	distances := NewContactCandidates()
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 100; i++ {
 		dist := HashKademliaID(strconv.Itoa(i)).CalcDistance(HashKademliaID("100"))
 		cont := []Contact{}
 		c := NewContact(dist, "")
