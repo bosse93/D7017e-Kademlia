@@ -9,7 +9,7 @@ import (
 func TestNetwork_HandleReplyPing(t *testing.T) {
 	id := NewKademliaID("ffffffff00000000000000000000000000000000")
 	channel := make(chan interface{})
-	network.createChannel(id, channel)
+	network.CreateChannel(id, channel)
 	contact := NewContact(id, "localhost:8000")
 
 	packet := &ReplyPing{contact.ID.String(), contact.Address}
@@ -19,7 +19,7 @@ func TestNetwork_HandleReplyPing(t *testing.T) {
 
 	go network.HandleReply(wrapper, nil, addr)
 
-	x := <-network.getAnswerChannel(id)
+	x := <-network.GetAnswerChannel(id)
 	returnedContact, ok := x.(Contact)
 	if ok {
 		if returnedContact.ID.String() != "ffffffff00000000000000000000000000000000" {
@@ -36,7 +36,7 @@ func TestNetwork_HandleReplyPing(t *testing.T) {
 func TestNetwork_HandleReplyContactList(t *testing.T) {
 	id := NewKademliaID("ffffffff00000000000000000000000000000000")
 	channel := make(chan interface{})
-	network.createChannel(id, channel)
+	network.CreateChannel(id, channel)
 	contact := NewContact(id, "localhost:8000")
 
 	contactReply := &ReplyContactList_Contact{contact.ID.String(), contact.Address}
@@ -51,7 +51,7 @@ func TestNetwork_HandleReplyContactList(t *testing.T) {
 
 	go network.HandleReply(wrapper, nil, addr)
 
-	x := <-network.getAnswerChannel(id)
+	x := <-network.GetAnswerChannel(id)
 	returnedContacts, ok := x.([]Contact)
 	if ok {
 		if returnedContacts[0].ID.String() != "ffffffff00000000000000000000000000000000" {
@@ -68,7 +68,7 @@ func TestNetwork_HandleReplyContactList(t *testing.T) {
 func TestNetwork_HandleReplyData(t *testing.T) {
 	id := NewKademliaID("ffffffff00000000000000000000000000000000")
 	channel := make(chan interface{})
-	network.createChannel(id, channel)
+	network.CreateChannel(id, channel)
 	contact := NewContact(id, "localhost:8000")
 
 	packet := &ReplyData{""}
@@ -79,7 +79,7 @@ func TestNetwork_HandleReplyData(t *testing.T) {
 
 	go network.HandleReply(wrapper, nil, addr)
 
-	x := <-network.getAnswerChannel(id)
+	x := <-network.GetAnswerChannel(id)
 	returnedAdress, ok := x.(string)
 	if ok {
 		if returnedAdress != "127.0.0.1:8000" {
@@ -93,7 +93,7 @@ func TestNetwork_HandleReplyData(t *testing.T) {
 func TestNetwork_HandleReplyStore(t *testing.T) {
 	id := NewKademliaID("ffffffff00000000000000000000000000000000")
 	channel := make(chan interface{})
-	network.createChannel(id, channel)
+	network.CreateChannel(id, channel)
 	contact := NewContact(id, "localhost:8000")
 
 	packet := &ReplyStore{"ok"}
@@ -104,7 +104,7 @@ func TestNetwork_HandleReplyStore(t *testing.T) {
 
 	go network.HandleReply(wrapper, nil, addr)
 
-	x := <-network.getAnswerChannel(id)
+	x := <-network.GetAnswerChannel(id)
 	reply, ok := x.(string)
 	if ok {
 		if reply != "ok" {
@@ -364,7 +364,7 @@ func TestNetwork_SendStoreMessage(t *testing.T) {
 func TestNetwork_TimeoutWaiter(t *testing.T) {
 	id := NewKademliaID("ffffffff00000000000000000000000000000000")
 	channel := make(chan interface{})
-	network.createChannel(id, channel)
+	network.CreateChannel(id, channel)
 	returnChannel := make(chan interface{})
 
 	go network.TimeoutWaiter(0, returnChannel, id)

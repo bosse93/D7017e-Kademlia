@@ -231,55 +231,6 @@ func StartNetwork() {
 	}*/
 
 }
-func removeDirectories(directories []string) {
-	fmt.Println("in remove")
-	for i := range directories {
-		os.Remove(directories[i])
-	}
-}
-
-func printLastNodeRT(nodeList []*RoutingTable) {
-	lastNode := nodeList[len(nodeList)-1]
-	fmt.Println("Node: " + lastNode.me.String())
-	for z := range lastNode.buckets {
-		contactList := lastNode.buckets[z]
-		fmt.Println("Bucket: " + strconv.Itoa(z))
-		for elt := contactList.list.Front(); elt != nil; elt = elt.Next() {
-			contact := elt.Value.(Contact)
-			fmt.Println(contact.String())
-		}
-	}
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
-func downloadFile(filepath string, url string) (err error) {
-	fmt.Println("filepath: " + filepath + " url: " + url)
-	// Create the file
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	// Writer the body to file
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func upload(id string, file string) {
 	fileDst, dstErr := os.Create("upload/" + id + "/" + file)
