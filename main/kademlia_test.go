@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 	"strconv"
+	"fmt"
+	"time"
 )
 
 
@@ -70,14 +72,15 @@ func TestKademlia_LookupData(t *testing.T) {
 	}
 }
 
-/*func TestKademlia_Store(t *testing.T) {
+func TestKademlia_Store(t *testing.T) {
 	kademlia := NewKademlia(network)
 	upload(network.node.rt.me.ID.String(), "testStore.txt")
 	go kademlia.Store("testStore.txt")
-	time.Sleep(1*time.Second)
-	found := kademlia.LookupData("testStore.txt")
-
+	time.Sleep(time.Duration(1)*time.Second)
+	kademlia2 := NewKademlia(network)
+	found := kademlia2.LookupData("testStore.txt")
+	fmt.Println("found " + strconv.FormatBool(found))
 	if !found {
-		t.Error("Expected found to be 'true', got" + strconv.FormatBool(found))
+		t.Error("Expected found to be 'true', got " + strconv.FormatBool(found))
 	}
-}*/
+}

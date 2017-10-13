@@ -352,6 +352,7 @@ func (network *Network) RepublishData() {
 			i := 0
 
 			for k := range contactList {
+				fmt.Println("contact in republish" + DecodeHash(contactList[k].ID.String()))
 				i++
 				if contactList[k].ID.String() == network.node.rt.me.ID.String() {
 					network.node.Store(dataEntryID, time.Now())

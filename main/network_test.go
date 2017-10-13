@@ -4,6 +4,9 @@ import (
 	"D7024e-Kademlia/github.com/protobuf/proto"
 	"net"
 	"testing"
+	"time"
+	"strconv"
+	"os"
 )
 
 func TestNetwork_HandleReplyPing(t *testing.T) {
@@ -116,6 +119,49 @@ func TestNetwork_HandleReplyStore(t *testing.T) {
 }
 
 func TestNetwork_RepublishData(t *testing.T) {
+	storeKademlia := NewKademlia(network)
+	go storeKademlia.Store("testStore.txt")
+	time.Sleep(time.Duration(1)*time.Second)
+	port := 9100
+	a := "localhost:" + strconv.Itoa(port)
+
+	ID := HashKademliaID("testStore.txt")
+	rt := NewRoutingTable(NewContact(ID, a))
+	//nodeList = append(nodeList, rt)
+	rt.AddContact(network.node.rt.me)
+	node := NewNode(rt)
+	tcpNetwork := NewFileNetwork(node, "localhost", port)
+	nw := NewNetwork(node, tcpNetwork, "localhost", port)
+	//fmt.Println("Ny Nod varv " + strconv.Itoa(i+1) + ": " + rt.me.String())
+	//go nw.Listen("localhost", port)
+	kademlia := NewKademlia(nw)
+
+	contactResult, _ := kademlia.LookupContact(ID, false)
+	if len(contactResult) > 0 {
+		for q := range contactResult {
+			rt.AddContact(contactResult[q])
+		}
+	}
+
+	if _, err := os.Stat("kademliastorage/" + ID.String()); os.IsNotExist(err) {
+		os.Mkdir("kademliastorage/"+ID.String(), 0777)
+	}
+
+	if _, err := os.Stat("upload/" + ID.String()); os.IsNotExist(err) {
+		os.Mkdir("upload/"+ID.String(), 0777)
+	}
+
+	if _, err := os.Stat("downloads/" + ID.String()); os.IsNotExist(err) {
+		os.Mkdir("downloads/"+ID.String(), 0777)
+	}
+	go network.RepublishData()
+	time.Sleep(20000 * time.Millisecond)
+
+	gotData := node.GotData(*HashKademliaID("testStore.txt"))
+
+	if !gotData {
+		t.Error("Expected node to have data")
+	}
 
 }
 

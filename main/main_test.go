@@ -8,9 +8,10 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"sync"
 )
 
-var network *Network = CreateTestNodes(20)
+var network *Network = CreateTestNodes(2)
 
 func connect(Usage string, arg0 string) {
 	p := make([]byte, 2048)
@@ -101,6 +102,42 @@ func CreateTestNodes(amount int) (network *Network)  {
 }
 
 /* TODO - GÖR FRONTEND ANROPET AUTOMAGISKT från funktionen, dvs samma sak som dfs store gör */
+
+func TestHandleRequest_Store(t *testing.T) {
+	addr := net.UDPAddr{
+		Port: 1234,
+		IP: net.ParseIP("127.0.0.1"),
+	}
+	ser, err := net.ListenUDP("udp", &addr)
+	split := []string {"store", "hej.txt"}
+	var mutex = &sync.Mutex{}
+	pinned := make(map[string]bool)
+
+	if err !=  nil {
+		fmt.Printf("Some error  %v", err)
+	}
+
+	go HandleRequest(ser, &addr, split, network, &pinned, mutex)
+
+}
+
+func TestHandleRequest_Cat(t *testing.T) {
+	addr := net.UDPAddr{
+		Port: 1234,
+		IP: net.ParseIP("127.0.0.1"),
+	}
+	ser, err := net.ListenUDP("udp", &addr)
+	split := []string {"cat", "testStore.txt"}
+	var mutex = &sync.Mutex{}
+	pinned := make(map[string]bool)
+
+	if err !=  nil {
+		fmt.Printf("Some error  %v", err)
+	}
+
+	go HandleRequest(ser, &addr, split, network, &pinned, mutex)
+
+}
 
 //oklart hur detta blir, körde en dfs store från front och fick 100%
 /*func TestHandleRequest(t *testing.T) {

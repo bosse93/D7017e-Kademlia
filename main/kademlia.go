@@ -68,7 +68,7 @@ func (kademlia *Kademlia) AskNextNode(target *KademliaID, destination *Contact, 
 // UpdateClosestContacts will update closest contacts with newly aquired contacts.
 // All nodes that doesn't already exist in closest will be added.
 // Then the list is sorted and upto 20 closest contacts is kept.
-// If no new Contact is added to closest identical answers in a row will be increased.
+// If no new Contact is added to closest 1 is added to numberOfIdenticalAnswersInRow.
 func (kademlia *Kademlia) UpdateClosestContacts(networkAnswer []Contact, target *KademliaID) {
 	same := true
 	var newNodeList []Contact
@@ -103,8 +103,8 @@ func (kademlia *Kademlia) UpdateClosestContacts(networkAnswer []Contact, target 
 }
 
 // LookupContact returns 20 closest contacts to target.
-// Spawns threads to do requests to Contacts and then handle their resonse.
-// Stops if same answer is recieved multiple times or if áll contacts in closest have been asked.
+// Spawns threads to do requests to Contacts and then handle their response.
+// Stops if same answer is recieved multiple times or if all contacts in closest have been asked.
 // If findData is set to true it will try to find data if it exists on the network.
 func (kademlia *Kademlia) LookupContact(target *KademliaID, findData bool) (returnContact []Contact, dataReturn string) {
 	kademlia.closest = NewContactCandidates()
