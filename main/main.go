@@ -5,7 +5,6 @@ import (
 	"net"
 	"strconv"
 	"time"
-	//"io/ioutil"
 	"bytes"
 	"io"
 	"io/ioutil"
@@ -20,7 +19,6 @@ func main() {
 }
 
 func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network *Network, pinned *map[string]bool, mux *sync.Mutex) {
-	//_,err := conn.WriteToUDP([]byte("From server: Hello I got your mesage " + p), addr)
 
 	if args[0] == "store" {
 		fmt.Println("this was a store message with arg " + args[0])
@@ -39,7 +37,6 @@ func HandleRequest(conn *net.UDPConn, addr *net.UDPAddr, args []string, network 
 		kademlia := NewKademlia(network)
 		//FFFFFFFF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
-		//newKad := HashKademliaID(args[1])
 		success := kademlia.LookupData(args[1])
 		if success {
 			mux.Lock()
@@ -77,9 +74,7 @@ func CreateNodes(amount int) (firstNetwork *Network) {
 	node := NewNode(firstNodeRT)
 	lastTCPNetwork := NewFileNetwork(node, "localhost", 8000)
 	firstNetwork = NewNetwork(node, lastTCPNetwork, "localhost", 8000)
-	//nodeList := []*RoutingTable{firstNodeRT}
-	//lastNode := firstNode
-	//create 100 nodes
+
 	if _, err := os.Stat("kademliastorage/" + firstNode.ID.String()); os.IsNotExist(err) {
 		os.Mkdir("kademliastorage/"+firstNode.ID.String(), 0777)
 	}
@@ -98,13 +93,11 @@ func CreateNodes(amount int) (firstNetwork *Network) {
 
 		ID := NewRandomKademliaID()
 		rt := NewRoutingTable(NewContact(ID, a))
-		//nodeList = append(nodeList, rt)
 		rt.AddContact(firstNodeRT.me)
 		node := NewNode(rt)
 		tcpNetwork := NewFileNetwork(node, "localhost", port)
 		nw := NewNetwork(node, tcpNetwork, "localhost", port)
 		fmt.Println("Ny Nod varv " + strconv.Itoa(i+1) + ": " + rt.me.String())
-		//go nw.Listen("localhost", port)
 		time.Sleep(500 * time.Millisecond)
 		kademlia := NewKademlia(nw)
 
@@ -150,16 +143,10 @@ func StartFrontend(lastNetwork *Network) {
 		split := strings.Split(string(p[:n]), " ")
 		fmt.Printf("Read a message from %v %s \n", remoteaddr, p)
 		fmt.Println(split)
-		if split[0] == "cat" {
-			fmt.Println("I got cat back do cat stuff")
-		} else if split[0] == "store" {
-			fmt.Println("I got Store back")
-		}
 		if err != nil {
 			fmt.Printf("Some error  %v", err)
 			continue
 		}
-		//go sendResponse(ser, remoteaddr)
 		go HandleRequest(ser, remoteaddr, split, lastNetwork, &pinned, mutex)
 		time.Sleep(100 * time.Millisecond)
 		for key, value := range pinned {
@@ -190,8 +177,6 @@ func StartNetwork() {
 	}
 	firstNetwork := CreateNodes(100)
 	StartFrontend(firstNetwork)
-
-
 }
 
 func upload(id string, file string) {

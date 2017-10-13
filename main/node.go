@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 	"time"
-	"fmt"
+	//"fmt"
 )
 
 type Node struct {
@@ -52,11 +52,8 @@ func (node *Node) DeleteEntry(dataEntryID KademliaID, storageMux *sync.Mutex) {
 	node.mux.Lock()
 	delete(node.data, dataEntryID)
 	node.mux.Unlock()
-	fmt.Println("before lock")
 	storageMux.Lock()
-	fmt.Println("after lock")
 	err := os.Remove("kademliastorage/" + node.rt.me.ID.String() + "/" + dataEntryID.String())
-	fmt.Println("after remove")
 	storageMux.Unlock()
 	if err != nil {
 		log.Fatal(err)

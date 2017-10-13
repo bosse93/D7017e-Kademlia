@@ -71,13 +71,14 @@ func (network *FileNetwork) HandleFileRequest(connection net.Conn) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer file.Close() // make sure to close the file even if we panic.
 		n1, err := io.Copy(connection, file)
 		if err != nil {
 			log.Fatal(err)
 		}
+		file.Close()
 		network.mux2.Unlock()
 		fmt.Println(n1, "bytes sent2")
+		
 	} else {
 		if _, err := os.Stat("upload/" + network.node.rt.me.ID.String() + "/" + DecodeHash(string(buffer[:n]))); os.IsNotExist(err) {
 			fmt.Println("Node doesn't have the requested file.")
@@ -89,11 +90,11 @@ func (network *FileNetwork) HandleFileRequest(connection net.Conn) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			defer file.Close() // make sure to close the file even if we panic.
 			n1, err := io.Copy(connection, file)
 			if err != nil {
 				log.Fatal(err)
 			}
+			file.Close()
 			network.mux1.Unlock()
 			fmt.Println(n1, "bytes sent1")
 		}
