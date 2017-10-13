@@ -142,23 +142,6 @@ func main() {
 	app.Run(os.Args)
 }
 
-/*
-func marshalHelper(wrapper *protoPack.WrapperMessage) []byte{
-	data, err := protoPack.Marshal(wrapper)
-	if err != nil {
-		log.Fatal("Marshall Error: ", err)
-	}
-	return data
-}
-
-func sendPacket(data []byte, targetAddress *net.UDPAddr) {
-	buf := []byte(data)
-	_, err := listenConnection.WriteToUDP(buf, targetAddress)
-	if err != nil {
-		log.Println(err)
-	}
-}*/
-
 func downloadFile(filepath string, url string) (err error) {
 	fmt.Println("filepath: " + filepath + " url: " + url)
 	// Create the file
